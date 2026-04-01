@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buffy RV Leveling</title>
+<style>
+body{margin:0;font-family:Arial;background:#0b0f14;color:#fff;height:100vh;overflow:hidden}
+#app{display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;height:100vh;transform-origin:top center}
+
+h2{margin:5px;color:#00ffcc}
+
+.level{width:150px;height:150px;border:2px solid #00ffcc;border-radius:50%;position:relative}
+.bubble{width:22px;height:22px;background:#00ffcc;border-radius:50%;position:absolute;transform:translate(-50%,-50%)}
+
+.van{width:220px;height:110px;background:#1c222b;border-radius:14px;position:relative;transform-origin:center;box-shadow:0 0 10px #000}
+.wheel{width:18px;height:18px;background:#999;border-radius:50%;position:absolute}
+.w1{top:-9px;left:20px}
+.w2{top:-9px;right:20px}
+.w3{bottom:-9px;left:20px}
+.w4{bottom:-9px;right:20px}
+
+.controls,.readouts{text-align:center;font-size:0.85em}
+button{padding:6px;margin:2px;background:#007aff;border:none;color:#fff;border-radius:6px}
+input{width:55px}
+
+.stable{color:#00ffcc}.unstable{color:#ff5555}
+.install{background:#34c759}
+.notice{font-size:0.7em;color:#aaa;text-align:center}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<h2>Buffy RV Leveling</h2>
+
+<div>
+<button onclick="start()">Start</button>
+<button onclick="calibrate()">Calibrate</button>
+<button onclick="toggleUnits()">Units: <span id="unit">in</span></button>
+<button class="install" id="installBtn" style="display:none">Install</button>
+</div>
+
+<div class="level"><div class="bubble" id="bubble"></div></div>
+
+<div class="van" id="van">
+<div class="wheel w1"></div>
+<div class="wheel w2"></div>
+<div class="wheel w3"></div>
+<div class="wheel w4"></div>
+</div>
+
+<div class="readouts">
+Pitch <span id="pitch">0</span>° | Roll <span id="roll">0</span>°<br>
+<span id="stability" class="unstable">Unstable</span>
+</div>
+
+<div class="controls">
+WB <input id="wb" value="159">
+Track <input id="track" value="70">
+</div>
+
+<div id="instructions"></div>
+
+<div class="notice">
+Install:
+<br>iPhone → Share → Add to Home Screen
+<br>Android → Tap Install button
+</div>
+
+</div>
+
+<script>
+let pitch=0, roll=0, offP=0, offR=0, mm=false;
+let lastVals=[];
+let deferredPrompt;
+
+function fitScreen(){
+ const app=document.getElementById('app');
+ const scale=window.innerHeight/app.scrollHeight;
+ app.style.transform='scale('+Math.min(scale,1)+')';
+}
+window.addEventListener('load',fitScreen);
+window.addEventListener('resize',fitScreen);
+
+window.addEventListener('beforeinstallprompt',(e)=>{
+ e.preventDefault();
+ deferredPrompt=e;
+ installBtn.style.display='inline-block';
+});
+
+installBtn.onclick=async()=>{
+ if(deferredPrompt){
+  deferredPrompt.prompt();
+  deferredPrompt=null;
+ }
+}
+
+function start(){
+ if (typeof DeviceOrientationEvent.requestPermission==='function'){
+  DeviceOrientationEvent.requestPermission().then(p=>{
+   if(p==='granted') window.addEventListener('deviceorientation',update);
+  });
+ } else window.addEventListener('deviceorientation',update);
+}
+
+function calibrate(){offP=pitch;offR=roll;}
+function toggleUnits(){mm=!mm;unit.textContent=mm?'mm':'in';}
+
+function update(e){
+ pitch=(e.beta||0)-offP;
+ roll=(e.gamma||0)-offR;
+
+ pitchEl.textContent=pitch.toFixed(1);
+ rollEl.textContent=roll.toFixed(1);
+
+ updateBubble();
+ updateVan();
+ updateInstructions();
+ checkStability();
+}
+
+function updateBubble(){
+ let x=Math.max(-55,Math.min(55,(roll/45)*55));
+ let y=Math.max(-55,Math.min(55,(pitch/45)*55));
+ bubble.style.left=75+x+'px';
+ bubble.style.top=75+y+'px';
+}
+
+function updateVan(){
+ van.style.transform=`rotate(${roll/3}deg)`;
+}
+
+function format(v){return mm?(v*25.4).toFixed(0)+' mm':v.toFixed(1)+' in';}
+function instr(v){return Math.abs(v)<0.2?'OK':(v>0?'Raise ':'Lower ')+format(Math.abs(v));}
+
+function updateInstructions(){
+ let wbv=parseFloat(wb.value), trv=parseFloat(track.value);
+ let pr=pitch*Math.PI/180, rr=roll*Math.PI/180;
+
+ let front=Math.tan(pr)*(wbv/2);
+ let rear=-front;
+ let left=Math.tan(rr)*(trv/2);
+ let right=-left;
+
+ let fl=front+left, fr=front+right, rl=rear+left, rrw=rear+right;
+
+ instructions.innerHTML=`FL: ${instr(fl)}<br>FR: ${instr(fr)}<br>RL: ${instr(rl)}<br>RR: ${instr(rrw)}`;
+}
+
+function checkStability(){
+ lastVals.push({p:pitch,r:roll});
+ if(lastVals.length>10) lastVals.shift();
+
+ let stable=true;
+ for(let i=1;i<lastVals.length;i++){
+  if(Math.abs(lastVals[i].p-lastVals[i-1].p)>0.5 || Math.abs(lastVals[i].r-lastVals[i-1].r)>0.5){
+    stable=false; break;
+  }
+ }
+
+ stability.textContent=stable?'Stable':'Unstable';
+ stability.className=stable?'stable':'unstable';
+}
+
+const pitchEl=document.getElementById('pitch');
+const rollEl=document.getElementById('roll');
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+ const sw=new Blob([`
+ self.addEventListener('install',e=>{
+  e.waitUntil(caches.open('v6').then(c=>c.addAll(['./'])));
+ });
+ self.addEventListener('fetch',e=>{
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
+ });
+ `],{type:'text/javascript'});
+ navigator.serviceWorker.register(URL.createObjectURL(sw));
+}
+</script>
+
+</body>
+</html>
