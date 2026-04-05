@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Van Leveler">
+<meta name="theme-color" content="#0b1120">
+<title>Van Leveler</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:      #0b1120;
+  --panel:   #121c30;
+  --rim:     #1d3050;
+  --accent:  #e8c84a;
+  --ok:      #3dffa0;
+  --warn:    #ffb340;
+  --hi:      #ff4f4f;
+  --text:    #ddeeff;
+  --muted:   #4a6888;
+  --dim:     #3a5070;
+  --radius:  16px;
+  --fn-disp: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --fn-mono: 'SF Mono', Menlo, Monaco, 'Courier New', monospace;
+  --fn-body: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+html, body {
+  height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--fn-body);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* dot grid atmosphere */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(232,200,74,.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+/* ── PERMISSION SCREEN ─────────────────────────────────────────────────── */
+#perm {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 22px; padding: 40px; text-align: center;
+  z-index: 200;
+}
+#perm.gone { display: none; }
+#perm .icon  { font-size: 4rem; }
+#perm h1 {
+  font-family: var(--fn-disp);
+  font-size: 1.8rem; font-weight: 800;
+  letter-spacing: .1em; color: var(--accent);
+  text-shadow: 0 0 24px rgba(232,200,74,.35);
+}
+#perm p {
+  color: var(--muted); line-height: 1.7;
+  font-size: .92rem; max-width: 300px;
+}
+#perm .start-btn {
+  background: var(--accent); color: #0a0c00;
+  border: none; border-radius: 14px;
+  padding: 17px 0; width: 100%; max-width: 280px;
+  font-family: var(--fn-disp); font-size: 1.05rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 0 24px rgba(232,200,74,.35);
+}
+#perm .note { color: var(--dim); font-size: .72rem; line-height: 1.6; }
+
+/* ── HOLD BADGE ────────────────────────────────────────────────────────── */
+#hold-badge {
+  position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,179,64,.1); border: 1px solid var(--warn);
+  border-radius: 10px; padding: 5px 18px;
+  font-family: var(--fn-mono); font-size: .65rem;
+  letter-spacing: .16em; color: var(--warn); text-transform: uppercase;
+  opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 10;
+}
+#hold-badge.show { opacity: 1; }
+
+/* ── APP SHELL ─────────────────────────────────────────────────────────── */
+#app {
+  display: flex; flex-direction: column;
+  height: 100dvh; max-width: 430px; margin: 0 auto;
+}
+
+/* ── HEADER ────────────────────────────────────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 10px; flex-shrink: 0;
+  border-bottom: 1px solid var(--rim);
+}
+.logo {
+  font-family: var(--fn-disp);
+  font-size: 1.4rem; font-weight: 800;
+  letter-spacing: .08em; color: var(--accent);
+  text-shadow: 0 0 20px rgba(232,200,74,.3);
+}
+.logo span { color: var(--text); font-weight: 400; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--dim); transition: background .4s, box-shadow .4s;
+}
+.dot.live { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.mode-tag {
+  font-family: var(--fn-mono); font-size: .56rem;
+  letter-spacing: .12em; color: var(--muted); text-transform: uppercase;
+  border: 1px solid var(--rim); border-radius: 6px; padding: 3px 7px;
+}
+
+/* ── ANGLE STRIP ───────────────────────────────────────────────────────── */
+#angles {
+  display: grid; grid-template-columns: 1fr 1px 1fr;
+  background: var(--panel); border-bottom: 1px solid var(--rim);
+  flex-shrink: 0;
+}
+.adiv { background: var(--rim); }
+.acell {
+  display: flex; flex-direction: column;
+  align-items: center; padding: 9px 0 7px; gap: 2px;
+}
+.albl {
+  font-family: var(--fn-mono); font-size: .57rem;
+  letter-spacing: .14em; color: var(--muted); text-transform: uppercase;
+}
+.anum {
+  font-family: var(--fn-mono); font-size: 1.55rem;
+  line-height: 1; transition: color .2s;
+}
+
+/* ── BUBBLE ────────────────────────────────────────────────────────────── */
+#bwrap {
+  display: flex; flex-direction: column;
+  align-items: center; padding: 10px 0 5px;
+  flex-shrink: 0; gap: 4px;
+}
+.slbl {
+  font-family: var(--fn-mono); font-size: .57rem;
+  letter-spacing: .16em; color: var(--muted); text-transform: uppercase;
+}
+#arena {
+  position: relative; width: 144px; height: 144px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 36%, #162238, #07090f);
+  border: 2px solid var(--rim); flex-shrink: 0;
+  transition: border-color .4s, box-shadow .4s;
+}
+#arena.level {
+  border-color: #1a4030;
+  box-shadow: 0 0 24px rgba(61,255,160,.12);
+}
+#arena svg { position: absolute; inset: 0; }
+#bub {
+  position: absolute; width: 34px; height: 34px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  top: 50%; left: 50%;
+  pointer-events: none;
+  transition: left .1s ease-out, top .1s ease-out,
+              background .3s, border-color .3s, box-shadow .3s;
+}
+#lvlpill {
+  font-family: var(--fn-mono); font-size: .62rem;
+  letter-spacing: .2em; color: var(--ok);
+  text-shadow: 0 0 10px rgba(61,255,160,.5);
+  height: 14px; opacity: 0; transition: opacity .4s;
+}
+#lvlpill.show { opacity: 1; animation: gpulse 2s ease infinite; }
+@keyframes gpulse {
+  0%,100% { text-shadow: 0 0 10px rgba(61,255,160,.5); }
+  50%      { text-shadow: 0 0 4px rgba(61,255,160,.2); }
+}
+
+/* ── DIM INPUTS ────────────────────────────────────────────────────────── */
+#dims {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 6px 14px; flex-shrink: 0;
+}
+.dcard {
+  background: var(--panel); border: 1px solid var(--rim);
+  border-radius: var(--radius); padding: 8px 10px;
+}
+.dlbl {
+  font-family: var(--fn-mono); font-size: .54rem;
+  letter-spacing: .12em; color: var(--muted);
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.drow { display: flex; align-items: center; gap: 5px; }
+.dinput {
+  flex: 1; min-width: 0; width: 0;
+  background: var(--bg); border: 1px solid var(--rim);
+  border-radius: 8px; color: var(--accent);
+  font-family: var(--fn-mono); font-size: 1.05rem;
+  padding: 6px; text-align: center; outline: none;
+  -webkit-appearance: none;
+}
+.dinput:focus { border-color: var(--accent); }
+.dunit { font-size: .63rem; color: var(--muted); white-space: nowrap; }
+
+/* ── WHEEL GRID ────────────────────────────────────────────────────────── */
+#wheels {
+  padding: 0 14px 10px;
+  flex: 1; display: flex; flex-direction: column;
+  gap: 5px; min-height: 0;
+}
+.dstrip {
+  display: flex; justify-content: space-between; padding: 0 4px;
+  font-family: var(--fn-mono); font-size: .54rem;
+  letter-spacing: .12em; color: var(--dim); text-transform: uppercase;
+}
+.wgrid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; flex: 1;
+}
+.wcard {
+  border-radius: var(--radius); padding: 10px 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px; position: relative; overflow: hidden;
+  border: 1px solid transparent;
+  transition: background .25s, border-color .25s, box-shadow .25s;
+}
+.wcard::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: background .25s, box-shadow .25s;
+}
+.wname {
+  font-family: var(--fn-mono); font-size: .57rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); margin-top: 4px;
+}
+.wrise {
+  font-family: var(--fn-disp); font-size: 2.1rem;
+  font-weight: 700; line-height: 1; transition: color .25s;
+}
+.win {
+  font-family: var(--fn-mono); font-size: .54rem;
+  color: var(--muted); letter-spacing: .1em;
+}
+.wcm { font-family: var(--fn-mono); font-size: .74rem; color: var(--dim); }
+
+.s0 { background: #091a10; border-color: #163526; }
+.s0::after { background: var(--ok); box-shadow: 0 0 10px rgba(61,255,160,.4); }
+.s0 .wrise { color: var(--ok); text-shadow: 0 0 14px rgba(61,255,160,.5); }
+
+.sL { background: #1c1608; border-color: #352c0a; }
+.sL::after { background: var(--warn); }
+.sL .wrise { color: var(--warn); }
+
+.sH { background: #1f0b0b; border-color: #380f0f; }
+.sH::after { background: var(--hi); box-shadow: 0 0 10px rgba(255,79,79,.4); }
+.sH .wrise { color: var(--hi); }
+
+/* ── ACTIONS ───────────────────────────────────────────────────────────── */
+#actions {
+  display: flex; gap: 8px; padding: 0 14px 16px; flex-shrink: 0;
+}
+.abtn {
+  flex: 1; background: transparent;
+  border: 1px solid var(--rim); border-radius: var(--radius);
+  color: var(--muted); font-family: var(--fn-mono);
+  font-size: .65rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: 13px; cursor: pointer; touch-action: manipulation;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.abtn:active, .abtn.on {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(232,200,74,.06);
+}
+.abtn.ok { border-color: var(--ok); color: var(--ok); }
+
+/* ── MANUAL FALLBACK ───────────────────────────────────────────────────── */
+#manual {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 0 14px 8px; flex-shrink: 0;
+}
+#manual.show { display: grid; }
+.mcard {
+  background: var(--panel); border: 1px solid var(--rim);
+  border-radius: var(--radius); padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+}
+.mlbl {
+  font-family: var(--fn-mono); font-size: .57rem;
+  letter-spacing: .12em; color: var(--muted); text-transform: uppercase;
+}
+.mval {
+  font-family: var(--fn-mono); font-size: 1.25rem;
+  color: var(--accent); min-width: 64px; text-align: center;
+}
+.mrow { display: flex; gap: 6px; width: 100%; }
+.madj {
+  flex: 1; height: 42px; border-radius: 10px;
+  border: 1px solid var(--rim); background: var(--bg);
+  color: var(--text); font-size: 1.4rem; font-weight: 300;
+  cursor: pointer; touch-action: manipulation;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s, border-color .1s;
+}
+.madj:active { background: var(--rim); border-color: var(--accent); }
+.msteps { display: flex; gap: 4px; width: 100%; }
+.msb {
+  flex: 1; padding: 5px 0; border-radius: 8px;
+  border: 1px solid var(--rim); background: transparent;
+  color: var(--muted); font-family: var(--fn-mono);
+  font-size: .6rem; cursor: pointer; text-align: center;
+  touch-action: manipulation; transition: color .1s;
+}
+.msb.on { border-color: var(--accent); color: var(--accent); }
+
+/* ── NO SENSOR NOTICE ──────────────────────────────────────────────────── */
+#nosensor {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: #150e02; border-top: 1px solid var(--warn);
+  padding: 14px 18px; font-size: .8rem; color: #c8a040;
+  line-height: 1.6; z-index: 50;
+}
+#nosensor button {
+  margin-top: 8px; background: transparent;
+  border: 1px solid var(--warn); color: var(--warn);
+  border-radius: 8px; padding: 5px 14px;
+  font-size: .75rem; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- Permission screen -->
+<div id="perm">
+  <div class="icon">🚐</div>
+  <h1>Van Leveler</h1>
+  <p>Lay your phone flat on the van floor. The accelerometer measures tilt and pitch — the app calculates exactly how much to raise each wheel.</p>
+  <button class="start-btn" onclick="boot()">Enable Sensors</button>
+  <p class="note">iOS will show a motion permission prompt — tap Allow.<br>Fully offline after first load.</p>
+</div>
+
+<div id="hold-badge">❚❚ Reading held</div>
+
+<div id="app">
+
+  <header>
+    <div class="logo">Van<span>Level</span></div>
+    <div class="hdr-right">
+      <span class="mode-tag" id="modetag">waiting</span>
+      <div class="dot" id="dot"></div>
+    </div>
+  </header>
+
+  <!-- Live angle readout -->
+  <div id="angles">
+    <div class="acell">
+      <span class="albl">Tilt</span>
+      <span class="anum" id="a-tilt">—</span>
+    </div>
+    <div class="adiv"></div>
+    <div class="acell">
+      <span class="albl">Pitch</span>
+      <span class="anum" id="a-pitch">—</span>
+    </div>
+  </div>
+
+  <!-- Bubble level -->
+  <div id="bwrap">
+    <div class="slbl">Level indicator</div>
+    <div id="arena">
+      <svg width="144" height="144" viewBox="0 0 144 144" id="ticksvg"></svg>
+      <div id="bub"></div>
+    </div>
+    <div id="lvlpill">✦ &nbsp; LEVEL &nbsp; ✦</div>
+  </div>
+
+  <!-- Van dimensions -->
+  <div id="dims">
+    <div class="dcard">
+      <div class="dlbl">Wheelbase (w)</div>
+      <div class="drow">
+        <input class="dinput" type="number" id="d-wb" value="144" inputmode="decimal" min="1">
+        <span class="dunit">in</span>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dlbl">Track width (l)</div>
+      <div class="drow">
+        <input class="dinput" type="number" id="d-tw" value="66" inputmode="decimal" min="1">
+        <span class="dunit">in</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual fallback controls (shown if sensors blocked) -->
+  <div id="manual">
+    <div class="mcard">
+      <span class="mlbl">Tilt <small style="color:#2a4060">(side)</small></span>
+      <span class="mval" id="mv-t">+0.0°</span>
+      <div class="mrow">
+        <button class="madj" data-ax="t" data-d="-1">−</button>
+        <button class="madj" data-ax="t" data-d="1">+</button>
+      </div>
+      <div class="msteps" id="ts">
+        <button class="msb on" data-ax="t" data-s="0.5">½°</button>
+        <button class="msb"    data-ax="t" data-s="1">1°</button>
+        <button class="msb"    data-ax="t" data-s="2">2°</button>
+      </div>
+    </div>
+    <div class="mcard">
+      <span class="mlbl">Pitch <small style="color:#2a4060">(front/rear)</small></span>
+      <span class="mval" id="mv-p">+0.0°</span>
+      <div class="mrow">
+        <button class="madj" data-ax="p" data-d="-1">−</button>
+        <button class="madj" data-ax="p" data-d="1">+</button>
+      </div>
+      <div class="msteps" id="ps">
+        <button class="msb on" data-ax="p" data-s="0.5">½°</button>
+        <button class="msb"    data-ax="p" data-s="1">1°</button>
+        <button class="msb"    data-ax="p" data-s="2">2°</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wheel results -->
+  <div id="wheels">
+    <div class="dstrip">
+      <span>◀ driver</span><span>↑ front</span><span>passenger ▶</span>
+    </div>
+    <div class="wgrid">
+      <div class="wcard" id="wFL"><div class="wname">Front Left</div> <div class="wrise" id="rFL">—</div><div class="win">inches</div><div class="wcm" id="cFL"></div></div>
+      <div class="wcard" id="wFR"><div class="wname">Front Right</div><div class="wrise" id="rFR">—</div><div class="win">inches</div><div class="wcm" id="cFR"></div></div>
+      <div class="wcard" id="wRL"><div class="wname">Rear Left</div>  <div class="wrise" id="rRL">—</div><div class="win">inches</div><div class="wcm" id="cRL"></div></div>
+      <div class="wcard" id="wRR"><div class="wname">Rear Right</div> <div class="wrise" id="rRR">—</div><div class="win">inches</div><div class="wcm" id="cRR"></div></div>
+    </div>
+    <div class="dstrip">
+      <span>◀ driver</span><span>↓ rear</span><span>passenger ▶</span>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div id="actions">
+    <button class="abtn" id="hold-btn" onclick="toggleHold()">⏸ &nbsp;Hold</button>
+    <button class="abtn" id="cal-btn"  onclick="calibrate()">⦿ &nbsp;Calibrate</button>
+  </div>
+
+</div>
+
+<div id="nosensor">
+  ⚠️ No sensor data. Check that you opened this in Safari directly (not inside an app) and tapped <b>Allow</b> on the motion prompt. Using manual mode below.
+  <br><button onclick="this.parentElement.style.display='none'">Dismiss</button>
+</div>
+
+<script>
+// ── Draw SVG ticks ────────────────────────────────────────────────────────
+(function() {
+  const svg = document.getElementById('ticksvg');
+  const cx = 72, cy = 72, r1 = 68;
+  // rings
+  [22, 42, 60].forEach(r => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+    c.setAttribute('fill','none'); c.setAttribute('stroke','#1d3050'); c.setAttribute('stroke-width','1');
+    svg.appendChild(c);
+  });
+  // crosshairs
+  [['x1','2','y1','72','x2','142','y2','72'],['x1','72','y1','2','x2','72','y2','142']].forEach(a => {
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    for (let i=0;i<a.length;i+=2) l.setAttribute(a[i], a[i+1]);
+    l.setAttribute('stroke','#1d3050'); l.setAttribute('stroke-width','1');
+    svg.appendChild(l);
+  });
+  // tick marks
+  for (let i = 0; i < 72; i++) {
+    const deg = i * 5, a = deg * Math.PI / 180;
+    const maj = deg % 45 === 0, med = deg % 15 === 0;
+    const len = maj ? 10 : med ? 6 : 3;
+    const r0  = r1 - len;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', cx + r0*Math.sin(a)); line.setAttribute('y1', cy - r0*Math.cos(a));
+    line.setAttribute('x2', cx + r1*Math.sin(a)); line.setAttribute('y2', cy - r1*Math.cos(a));
+    line.setAttribute('stroke', maj ? '#3a5535' : '#1d3050');
+    line.setAttribute('stroke-width', maj ? '2' : '1');
+    svg.appendChild(line);
+  }
+})();
+
+// ── State ─────────────────────────────────────────────────────────────────
+let tilt = 0, pitch = 0;
+let calT = 0,  calP  = 0;
+let smT  = 0,  smP   = 0;
+let live = false, held = false, manual = false;
+let stepT = 0.5, stepP = 0.5;
+let rptTimer = null, rptIval = null;
+const ALPHA  = 0.13;
+const THRESH = 0.3;
+
+const $ = id => document.getElementById(id);
+const sgn = v => v >= 0 ? '+' : '';
+const fmt = v => (Math.abs(v) < 0.05 ? '+0.0' : sgn(v) + v.toFixed(1)) + '°';
+const rnd = (v, s) => Math.round(v / s) * s;
+
+// ── Sensor boot ───────────────────────────────────────────────────────────
+function boot() {
+  $('perm').classList.add('gone');
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission()
+      .then(s => { if (s === 'granted') attach(); else fallback('Permission denied.'); })
+      .catch(() => attach());
+  } else {
+    attach();
+  }
+}
+
+function attach() {
+  window.addEventListener('deviceorientation', onOrient, true);
+  setTimeout(() => { if (!live) fallback(); }, 3500);
+}
+
+function fallback(msg) {
+  $('nosensor').style.display = 'block';
+  if (msg) $('nosensor').firstChild.textContent = '⚠️ ' + msg + ' Using manual mode.';
+  $('manual').classList.add('show');
+  $('modetag').textContent = 'manual';
+  manual = true;
+  render();
+}
+
+// ── Orientation handler ───────────────────────────────────────────────────
+function onOrient(e) {
+  if (e.beta === null && e.gamma === null) return;
+  if (!live) {
+    live = true;
+    $('dot').classList.add('live');
+    $('modetag').textContent = 'live';
+  }
+  if (held || manual) return;
+
+  // phone flat face-up: gamma = side roll, beta = front-back tilt
+  // invert: + tilt = right/passenger side high, + pitch = front high
+  const rt = -(e.gamma ?? 0) - calT;
+  const rp = -(e.beta  ?? 0) - calP;
+  smT += ALPHA * (rt - smT);
+  smP += ALPHA * (rp - smP);
+  tilt  = +smT.toFixed(2);
+  pitch = +smP.toFixed(2);
+  render();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const t = tilt, p = pitch;
+  const isLevel = Math.abs(t) < THRESH && Math.abs(p) < THRESH;
+
+  // angle strip
+  const col = v => Math.abs(v) < THRESH ? 'var(--ok)' : 'var(--accent)';
+  $('a-tilt').textContent  = fmt(t); $('a-tilt').style.color  = col(t);
+  $('a-pitch').textContent = fmt(p); $('a-pitch').style.color = col(p);
+
+  // bubble — 72px centre, max 56px offset
+  const MAX = 56, SC = 5.5;
+  const bx = Math.max(-MAX, Math.min(MAX, -t * SC));
+  const by = Math.max(-MAX, Math.min(MAX,  p * SC));
+  const bub = $('bub');
+  bub.style.left = (72 + bx) + 'px';
+  bub.style.top  = (72 + by) + 'px';
+  bub.style.background = isLevel
+    ? 'radial-gradient(circle at 35% 30%, rgba(61,255,160,.95), rgba(0,130,70,.45))'
+    : 'radial-gradient(circle at 35% 30%, rgba(232,200,74,.95), rgba(130,90,0,.4))';
+  bub.style.border     = `2px solid ${isLevel ? 'var(--ok)' : 'var(--accent)'}`;
+  bub.style.boxShadow  = isLevel ? '0 0 18px rgba(61,255,160,.65)' : '0 0 12px rgba(232,200,74,.5)';
+  $('arena').classList.toggle('level', isLevel);
+  $('lvlpill').classList.toggle('show', isLevel);
+
+  // manual readouts
+  if (manual) {
+    $('mv-t').textContent = fmt(t);
+    $('mv-p').textContent = fmt(p);
+  }
+
+  // wheel math
+  const w  = parseFloat($('d-wb').value) || 144;
+  const l  = parseFloat($('d-tw').value) || 66;
+  const tp = Math.tan(t * Math.PI / 180);
+  const pp = Math.tan(p * Math.PI / 180);
+  const h  = {
+    FL:  (w/2)*pp + (l/2)*tp,
+    FR:  (w/2)*pp - (l/2)*tp,
+    RL: -(w/2)*pp + (l/2)*tp,
+    RR: -(w/2)*pp - (l/2)*tp,
+  };
+  const minH = Math.min(...Object.values(h));
+  const span = Math.max(...Object.values(h)) - minH || 1;
+
+  for (const k of ['FL','FR','RL','RR']) {
+    const rise = h[k] - minH;
+    const frac = rise / span;
+    $('r' + k).textContent = rise < 0.005 ? '0.00' : rise.toFixed(2);
+    $('c' + k).textContent = (rise * 2.54).toFixed(1) + ' cm';
+    $('w' + k).className   = 'wcard ' + (rise < 0.05 ? 's0' : frac < 0.55 ? 'sL' : 'sH');
+  }
+}
+
+// ── Hold / Calibrate ──────────────────────────────────────────────────────
+function toggleHold() {
+  if (manual) return;
+  held = !held;
+  $('hold-btn').classList.toggle('on', held);
+  $('hold-badge').classList.toggle('show', held);
+  $('hold-btn').textContent = held ? '▶ \u00a0Resume' : '⏸ \u00a0Hold';
+}
+
+function calibrate() {
+  calT += tilt; calP += pitch;
+  smT = 0; smP = 0; tilt = 0; pitch = 0;
+  if (held) toggleHold();
+  render();
+  const b = $('cal-btn');
+  const orig = b.textContent;
+  b.classList.add('ok'); b.textContent = '✓ \u00a0Zeroed';
+  setTimeout(() => { b.classList.remove('ok'); b.textContent = orig; }, 1400);
+}
+
+// ── Manual +/− with long-press ────────────────────────────────────────────
+function nudge(ax, dir) {
+  const step = ax === 't' ? stepT : stepP;
+  if (ax === 't') tilt  = Math.max(-20, Math.min(20, +(rnd(tilt  + dir*step, step)).toFixed(2)));
+  else            pitch = Math.max(-20, Math.min(20, +(rnd(pitch + dir*step, step)).toFixed(2)));
+  render();
+}
+function pressStart(ax, dir) {
+  nudge(ax, dir);
+  rptTimer = setTimeout(() => { rptIval = setInterval(() => nudge(ax, dir), 110); }, 380);
+}
+function pressEnd() { clearTimeout(rptTimer); clearInterval(rptIval); }
+
+document.querySelectorAll('.madj').forEach(btn => {
+  const ax = btn.dataset.ax, dir = +btn.dataset.d;
+  btn.addEventListener('touchstart', e => { e.preventDefault(); pressStart(ax, dir); }, {passive:false});
+  btn.addEventListener('touchend',   pressEnd);
+  btn.addEventListener('touchcancel',pressEnd);
+  btn.addEventListener('mousedown',  () => pressStart(ax, dir));
+  btn.addEventListener('mouseup',    pressEnd);
+  btn.addEventListener('mouseleave', pressEnd);
+});
+
+// step selectors
+['ts','ps'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('.msb'); if (!b) return;
+    const ax = b.dataset.ax, s = parseFloat(b.dataset.s);
+    if (ax === 't') stepT = s; else stepP = s;
+    document.querySelectorAll(`#${id} .msb`).forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+
+// dim inputs
+$('d-wb').addEventListener('input', render);
+$('d-tw').addEventListener('input', render);
+
+// ── Service Worker (offline) ──────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const sw = `const C='vl-v1';
+self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['/'])));self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{caches.open(C).then(c=>c.put(e.request,res.clone()));return res;}).catch(()=>caches.match('/'))));});`;
+  const url = URL.createObjectURL(new Blob([sw],{type:'application/javascript'}));
+  navigator.serviceWorker.register(url,{scope:'/'}).then(()=>URL.revokeObjectURL(url)).catch(()=>{});
+}
+
+// init render
+render();
+</script>
+</body>
+</html>
