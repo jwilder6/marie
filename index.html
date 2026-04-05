@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BuffyLevel">
+<meta name="theme-color" content="#0b1120">
+<title>BuffyLevel</title>
+<link id="apple-touch-icon" rel="apple-touch-icon">
+<link id="favicon" rel="icon" type="image/png">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:      #0b1120;
+  --panel:   #121c30;
+  --rim:     #1d3050;
+  --accent:  #e8c84a;
+  --ok:      #3dffa0;
+  --warn:    #ffb340;
+  --hi:      #ff4f4f;
+  --text:    #ddeeff;
+  --muted:   #8ab0cc;
+  --dim:     #5a7898;
+  --radius:  14px;
+  --fn-disp: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --fn-mono: 'SF Mono', Menlo, Monaco, 'Courier New', monospace;
+  --fn-body: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --safe-b:  env(safe-area-inset-bottom, 0px);
+}
+
+html { height: 100%; }
+body {
+  height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--fn-body);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(232,200,74,.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+/* PERMISSION SCREEN */
+#perm {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; padding: 28px 26px; text-align: center; z-index: 200;
+  overflow-y: auto;
+}
+#perm.gone { display: none; }
+#perm h1 {
+  font-family: var(--fn-disp); font-size: 1.7rem; font-weight: 800;
+  letter-spacing: .08em; color: var(--accent);
+  text-shadow: 0 0 24px rgba(232,200,74,.35);
+}
+#perm .tagline { color: var(--muted); line-height: 1.6; font-size: .93rem; max-width: 290px; }
+.orient-caption {
+  font-family: var(--fn-mono); font-size: .73rem;
+  color: var(--muted); letter-spacing: .04em; line-height: 1.65; max-width: 260px;
+}
+.orient-caption b { color: var(--accent); }
+#perm .start-btn {
+  background: var(--accent); color: #0a0c00; border: none; border-radius: 14px;
+  padding: 15px 0; width: 100%; max-width: 280px;
+  font-family: var(--fn-disp); font-size: 1rem; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 0 24px rgba(232,200,74,.3);
+}
+#perm .note { color: var(--dim); font-size: .75rem; line-height: 1.65; max-width: 280px; }
+
+/* HOLD BADGE */
+#hold-badge {
+  position: fixed; top: 58px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,179,64,.1); border: 1px solid var(--warn);
+  border-radius: 10px; padding: 4px 16px;
+  font-family: var(--fn-mono); font-size: .68rem;
+  letter-spacing: .14em; color: var(--warn); text-transform: uppercase;
+  opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 10;
+}
+#hold-badge.show { opacity: 1; }
+
+/* APP SHELL */
+#app {
+  display: flex; flex-direction: column;
+  height: 100dvh; max-width: 430px; margin: 0 auto;
+  padding-bottom: var(--safe-b);
+}
+
+/* HEADER */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--rim);
+}
+.logo {
+  font-family: var(--fn-disp); font-size: 1.25rem; font-weight: 800;
+  letter-spacing: .06em; color: var(--accent);
+  text-shadow: 0 0 18px rgba(232,200,74,.3);
+}
+.logo span { color: var(--text); font-weight: 400; }
+.hdr-right { display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); transition: background .4s, box-shadow .4s; }
+.dot.live { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.mode-tag {
+  font-family: var(--fn-mono); font-size: .68rem;
+  letter-spacing: .1em; color: var(--muted); text-transform: uppercase;
+  border: 1px solid var(--rim); border-radius: 6px; padding: 2px 7px;
+}
+
+/* ANGLE STRIP */
+#angles {
+  display: grid; grid-template-columns: 1fr 1px 1fr;
+  background: var(--panel); border-bottom: 1px solid var(--rim); flex-shrink: 0;
+}
+.adiv { background: var(--rim); }
+.acell { display: flex; flex-direction: column; align-items: center; padding: 6px 0 5px; gap: 1px; }
+.albl { font-family: var(--fn-mono); font-size: .72rem; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+.anum { font-family: var(--fn-mono); font-size: 1.4rem; line-height: 1; transition: color .2s; }
+
+/* BUBBLE ROW */
+#bwrap {
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  padding: 6px 10px; flex-shrink: 0; gap: 10px;
+}
+.dir-col { display: flex; flex-direction: column; justify-content: space-around; height: 118px; flex-shrink: 0; gap: 0; }
+.dir-lbl { font-family: var(--fn-mono); font-size: .65rem; color: var(--dim); letter-spacing: .06em; text-transform: uppercase; line-height: 1; }
+#bubble-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+#arena {
+  position: relative; width: 118px; height: 118px; border-radius: 50%;
+  background: radial-gradient(circle at 42% 36%, #162238, #07090f);
+  border: 2px solid var(--rim); flex-shrink: 0;
+  transition: border-color .4s, box-shadow .4s;
+}
+#arena.level { border-color: #1a4030; box-shadow: 0 0 20px rgba(61,255,160,.14); }
+#arena svg { position: absolute; inset: 0; }
+#bub {
+  position: absolute; width: 28px; height: 28px; border-radius: 50%;
+  transform: translate(-50%,-50%); top: 50%; left: 50%; pointer-events: none;
+  transition: left .1s ease-out, top .1s ease-out, background .3s, border-color .3s, box-shadow .3s;
+}
+#lvlpill {
+  font-family: var(--fn-mono); font-size: .63rem; letter-spacing: .18em; color: var(--ok);
+  text-shadow: 0 0 10px rgba(61,255,160,.5); height: 13px; opacity: 0; transition: opacity .4s;
+}
+#lvlpill.show { opacity: 1; animation: gpulse 2s ease infinite; }
+@keyframes gpulse { 0%,100%{text-shadow:0 0 10px rgba(61,255,160,.5);}50%{text-shadow:0 0 3px rgba(61,255,160,.2);} }
+
+/* DIM INPUTS */
+#dims { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px 14px; flex-shrink: 0; }
+.dcard { background: var(--panel); border: 1px solid var(--rim); border-radius: var(--radius); padding: 6px 10px; }
+.dlbl { font-family: var(--fn-mono); font-size: .7rem; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+.drow { display: flex; align-items: center; gap: 5px; }
+.dinput {
+  flex: 1; min-width: 0; width: 0; background: var(--bg); border: 1px solid var(--rim);
+  border-radius: 8px; color: var(--accent); font-family: var(--fn-mono); font-size: 1rem;
+  padding: 5px; text-align: center; outline: none; -webkit-appearance: none;
+}
+.dinput:focus { border-color: var(--accent); }
+.dunit { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+
+/* WHEEL GRID */
+#wheels { padding: 0 14px 5px; flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+#inc-row { display: flex; align-items: center; gap: 6px; padding: 0 2px; }
+.inc-lbl { font-family: var(--fn-mono); font-size: .68rem; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
+.inc-btns { display: flex; gap: 4px; }
+.inc-btn {
+  padding: 3px 10px; border-radius: 7px; border: 1px solid var(--rim); background: transparent;
+  color: var(--dim); font-family: var(--fn-mono); font-size: .68rem; cursor: pointer; touch-action: manipulation;
+  transition: border-color .1s, color .1s;
+}
+.inc-btn.on { border-color: var(--accent); color: var(--accent); }
+.dstrip {
+  display: flex; justify-content: space-between; padding: 0 2px;
+  font-family: var(--fn-mono); font-size: .68rem; letter-spacing: .08em; color: var(--dim); text-transform: uppercase;
+}
+.wgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex: 1; }
+.wcard {
+  border-radius: var(--radius); padding: 7px 6px 6px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; position: relative; overflow: hidden; border: 1px solid transparent;
+  transition: background .25s, border-color .25s;
+}
+.wcard::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0; transition: background .25s, box-shadow .25s;
+}
+.wname { font-family: var(--fn-mono); font-size: .68rem; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.wrise { font-family: var(--fn-disp); font-size: 1.85rem; font-weight: 700; line-height: 1; transition: color .25s; }
+.win { font-family: var(--fn-mono); font-size: .68rem; color: var(--muted); letter-spacing: .07em; }
+.wcm { font-family: var(--fn-mono); font-size: .73rem; color: var(--dim); }
+
+.s0 { background: #091a10; border-color: #163526; }
+.s0::after { background: var(--ok); box-shadow: 0 0 10px rgba(61,255,160,.4); }
+.s0 .wrise { color: var(--ok); text-shadow: 0 0 14px rgba(61,255,160,.5); }
+.s0 .wname, .s0 .win { color: #5ab890; }
+.sL { background: #1c1608; border-color: #352c0a; }
+.sL::after { background: var(--warn); }
+.sL .wrise { color: var(--warn); }
+.sL .wname, .sL .win { color: #c09050; }
+.sH { background: #1f0b0b; border-color: #380f0f; }
+.sH::after { background: var(--hi); box-shadow: 0 0 10px rgba(255,79,79,.4); }
+.sH .wrise { color: var(--hi); }
+.sH .wname, .sH .win { color: #c07070; }
+
+/* ACTIONS */
+#actions { display: flex; gap: 8px; padding: 4px 14px 8px; flex-shrink: 0; }
+.abtn {
+  flex: 1; background: transparent; border: 1px solid var(--rim); border-radius: var(--radius);
+  color: var(--muted); font-family: var(--fn-mono); font-size: .72rem;
+  letter-spacing: .08em; text-transform: uppercase; padding: 11px;
+  cursor: pointer; touch-action: manipulation; transition: border-color .15s, color .15s, background .15s;
+}
+.abtn:active, .abtn.on { border-color: var(--accent); color: var(--accent); background: rgba(232,200,74,.06); }
+.abtn.ok { border-color: var(--ok); color: var(--ok); }
+
+/* MANUAL FALLBACK */
+#manual { display: none; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 14px 5px; flex-shrink: 0; }
+#manual.show { display: grid; }
+.mcard { background: var(--panel); border: 1px solid var(--rim); border-radius: var(--radius); padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mlbl { font-family: var(--fn-mono); font-size: .7rem; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.mval { font-family: var(--fn-mono); font-size: 1.15rem; color: var(--accent); min-width: 60px; text-align: center; }
+.mrow { display: flex; gap: 5px; width: 100%; }
+.madj {
+  flex: 1; height: 40px; border-radius: 9px; border: 1px solid var(--rim); background: var(--bg);
+  color: var(--text); font-size: 1.35rem; font-weight: 300; cursor: pointer; touch-action: manipulation;
+  display: flex; align-items: center; justify-content: center; transition: background .1s, border-color .1s;
+}
+.madj:active { background: var(--rim); border-color: var(--accent); }
+.msteps { display: flex; gap: 4px; width: 100%; }
+.msb {
+  flex: 1; padding: 4px 0; border-radius: 7px; border: 1px solid var(--rim); background: transparent;
+  color: var(--muted); font-family: var(--fn-mono); font-size: .68rem;
+  cursor: pointer; text-align: center; touch-action: manipulation; transition: color .1s;
+}
+.msb.on { border-color: var(--accent); color: var(--accent); }
+
+/* NO SENSOR */
+#nosensor {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: #150e02; border-top: 1px solid var(--warn);
+  padding: 12px 16px calc(12px + var(--safe-b));
+  font-size: .82rem; color: #c8a040; line-height: 1.6; z-index: 50;
+}
+#nosensor button {
+  margin-top: 6px; background: transparent; border: 1px solid var(--warn); color: var(--warn);
+  border-radius: 8px; padding: 5px 14px; font-size: .78rem; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="perm">
+  <h1>BuffyLevel</h1>
+  <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
+
+  <svg width="210" height="136" viewBox="0 0 210 136">
+    <defs>
+      <marker id="arr" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+        <polygon points="0,4 2.5,0 5,4" fill="#e8c84a"/>
+      </marker>
+    </defs>
+    <!-- Van body -->
+    <rect x="65" y="28" width="80" height="56" rx="7" fill="#121c30" stroke="#1d3050" stroke-width="2"/>
+    <!-- Windshield / front -->
+    <rect x="65" y="28" width="80" height="16" rx="5" fill="#1a2d48" stroke="#1d3050" stroke-width="1"/>
+    <!-- Wheels -->
+    <rect x="58" y="32" width="8" height="12" rx="2" fill="#2a3a50"/>
+    <rect x="58" y="72" width="8" height="12" rx="2" fill="#2a3a50"/>
+    <rect x="144" y="32" width="8" height="12" rx="2" fill="#2a3a50"/>
+    <rect x="144" y="72" width="8" height="12" rx="2" fill="#2a3a50"/>
+    <!-- FRONT label + arrow -->
+    <text x="105" y="22" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="9" fill="#e8c84a" letter-spacing="2">FRONT</text>
+    <!-- REAR label -->
+    <text x="105" y="102" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="9" fill="#5a7898" letter-spacing="2">REAR</text>
+    <!-- DRIVER label -->
+    <text x="22" y="60" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="8" fill="#5a7898" transform="rotate(-90,22,60)">DRIVER</text>
+    <!-- Phone inside van -->
+    <rect x="80" y="36" width="50" height="44" rx="5" fill="#0b1120" stroke="#e8c84a" stroke-width="1.5"/>
+    <!-- Phone notch at top = front -->
+    <rect x="99" y="36" width="12" height="3.5" rx="1.5" fill="#e8c84a"/>
+    <!-- Phone screen -->
+    <rect x="83" y="41" width="44" height="35" rx="3" fill="#121c30"/>
+    <!-- Bubble circles -->
+    <circle cx="105" cy="58" r="10" fill="none" stroke="#1d3050" stroke-width="1"/>
+    <circle cx="105" cy="58" r="4.5" fill="rgba(232,200,74,.9)" stroke="#e8c84a" stroke-width="1.2"/>
+    <!-- "face up" label -->
+    <text x="105" y="84" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="7.5" fill="#8ab0cc">face up</text>
+    <!-- Arrow: phone notch toward FRONT -->
+    <line x1="105" y1="28" x2="105" y2="36" stroke="#e8c84a" stroke-width="1.5" marker-end="url(#arr)"/>
+  </svg>
+
+  <p class="orient-caption">
+    Phone <b>face up</b> · <b>top toward front of van</b> · <b>left side to driver's door</b>
+  </p>
+
+  <button class="start-btn" onclick="boot()">Enable Sensors</button>
+  <p class="note">iOS will show a motion prompt — tap <b>Allow</b>.<br>Works fully offline after first load.</p>
+</div>
+
+<div id="hold-badge">❚❚ Reading held</div>
+
+<div id="app">
+  <header>
+    <div class="logo">Buffy<span>Level</span></div>
+    <div class="hdr-right">
+      <span class="mode-tag" id="modetag">tap start</span>
+      <div class="dot" id="dot"></div>
+    </div>
+  </header>
+
+  <div id="angles">
+    <div class="acell"><span class="albl">Tilt °</span><span class="anum" id="a-tilt">—</span></div>
+    <div class="adiv"></div>
+    <div class="acell"><span class="albl">Pitch °</span><span class="anum" id="a-pitch">—</span></div>
+  </div>
+
+  <div id="bwrap">
+    <div class="dir-col">
+      <span class="dir-lbl">↑ Front</span>
+      <span class="dir-lbl">◀ Driver</span>
+      <span class="dir-lbl">↓ Rear</span>
+    </div>
+    <div id="bubble-col">
+      <div id="arena">
+        <svg width="118" height="118" viewBox="0 0 118 118" id="ticksvg"></svg>
+        <div id="bub"></div>
+      </div>
+      <div id="lvlpill">✦ &nbsp;LEVEL&nbsp; ✦</div>
+    </div>
+    <div class="dir-col" style="align-items:flex-end">
+      <span class="dir-lbl">Front ↑</span>
+      <span class="dir-lbl">Pass. ▶</span>
+      <span class="dir-lbl">Rear ↓</span>
+    </div>
+  </div>
+
+  <div id="dims">
+    <div class="dcard">
+      <div class="dlbl">Wheelbase (w)</div>
+      <div class="drow">
+        <input class="dinput" type="number" id="d-wb" value="159" inputmode="decimal" min="1">
+        <span class="dunit">in</span>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dlbl">Track width (l)</div>
+      <div class="drow">
+        <input class="dinput" type="number" id="d-tw" value="71" inputmode="decimal" min="1">
+        <span class="dunit">in</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="manual">
+    <div class="mcard">
+      <span class="mlbl">Tilt (side)</span>
+      <span class="mval" id="mv-t">+0.0°</span>
+      <div class="mrow">
+        <button class="madj" data-ax="t" data-d="-1">−</button>
+        <button class="madj" data-ax="t" data-d="1">+</button>
+      </div>
+      <div class="msteps" id="ts">
+        <button class="msb on" data-ax="t" data-s="0.5">½°</button>
+        <button class="msb"    data-ax="t" data-s="1">1°</button>
+        <button class="msb"    data-ax="t" data-s="2">2°</button>
+      </div>
+    </div>
+    <div class="mcard">
+      <span class="mlbl">Pitch (front/rear)</span>
+      <span class="mval" id="mv-p">+0.0°</span>
+      <div class="mrow">
+        <button class="madj" data-ax="p" data-d="-1">−</button>
+        <button class="madj" data-ax="p" data-d="1">+</button>
+      </div>
+      <div class="msteps" id="ps">
+        <button class="msb on" data-ax="p" data-s="0.5">½°</button>
+        <button class="msb"    data-ax="p" data-s="1">1°</button>
+        <button class="msb"    data-ax="p" data-s="2">2°</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="wheels">
+    <div id="inc-row">
+      <span class="inc-lbl">Show rise:</span>
+      <div class="inc-btns">
+        <button class="inc-btn on" data-inc="0">Exact</button>
+        <button class="inc-btn"    data-inc="0.5">½&#x22;</button>
+        <button class="inc-btn"    data-inc="1">1&#x22;</button>
+      </div>
+    </div>
+    <div class="dstrip"><span>◀ driver</span><span>↑ front</span><span>passenger ▶</span></div>
+    <div class="wgrid">
+      <div class="wcard" id="wFL"><div class="wname">Front Left</div><div class="wrise" id="rFL">—</div><div class="win">inches</div><div class="wcm" id="cFL"></div></div>
+      <div class="wcard" id="wFR"><div class="wname">Front Right</div><div class="wrise" id="rFR">—</div><div class="win">inches</div><div class="wcm" id="cFR"></div></div>
+      <div class="wcard" id="wRL"><div class="wname">Rear Left</div><div class="wrise" id="rRL">—</div><div class="win">inches</div><div class="wcm" id="cRL"></div></div>
+      <div class="wcard" id="wRR"><div class="wname">Rear Right</div><div class="wrise" id="rRR">—</div><div class="win">inches</div><div class="wcm" id="cRR"></div></div>
+    </div>
+    <div class="dstrip"><span>◀ driver</span><span>↓ rear</span><span>passenger ▶</span></div>
+  </div>
+
+  <div id="actions">
+    <button class="abtn" id="hold-btn" onclick="toggleHold()">&#9208; &nbsp;Hold</button>
+    <button class="abtn" id="cal-btn"  onclick="calibrate()">&#9678; &nbsp;Calibrate</button>
+  </div>
+</div>
+
+<div id="nosensor">
+  &#9888;&#65039; <span id="nosensor-msg">No sensor data.</span>
+  <br><button onclick="this.parentElement.style.display='none'">Dismiss</button>
+</div>
+
+<script>
+(function drawTicks() {
+  const svg=document.getElementById('ticksvg'),cx=59,cy=59,r1=55;
+  [[18,1],[34,1],[48,1]].forEach(([r,w])=>{
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',r);
+    c.setAttribute('fill','none');c.setAttribute('stroke','#1d3050');c.setAttribute('stroke-width',w);
+    svg.appendChild(c);
+  });
+  [['x1','4','y1','59','x2','114','y2','59'],['x1','59','y1','4','x2','59','y2','114']].forEach(a=>{
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    for(let i=0;i<a.length;i+=2)l.setAttribute(a[i],a[i+1]);
+    l.setAttribute('stroke','#1d3050');l.setAttribute('stroke-width','1');svg.appendChild(l);
+  });
+  for(let i=0;i<72;i++){
+    const a=i*5*Math.PI/180,maj=i%9===0,med=i%3===0;
+    const len=maj?9:med?5:3,r0=r1-len;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',cx+r0*Math.sin(a));line.setAttribute('y1',cy-r0*Math.cos(a));
+    line.setAttribute('x2',cx+r1*Math.sin(a));line.setAttribute('y2',cy-r1*Math.cos(a));
+    line.setAttribute('stroke',maj?'#3a5535':'#1d3050');
+    line.setAttribute('stroke-width',maj?'2':'1');
+    svg.appendChild(line);
+  }
+})();
+
+let tilt=0,pitch=0,calT=0,calP=0,smT=0,smP=0;
+let live=false,held=false,manual=false;
+let stepT=0.5,stepP=0.5,incSize=0;
+let rptTimer=null,rptIval=null;
+const ALPHA=0.13,THRESH=0.3;
+const $=id=>document.getElementById(id);
+const sgn=v=>v>=0?'+':'';
+const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
+const rnd=(v,s)=>Math.round(v/s)*s;
+
+function fmtRise(inches){
+  if(inches<0.05) return '0.0';
+  if(incSize>0){
+    const rounded=Math.ceil(inches/incSize)*incSize;
+    return rounded.toFixed(incSize===0.5?1:0);
+  }
+  return inches.toFixed(1);
+}
+
+document.getElementById('inc-row').addEventListener('click',e=>{
+  const b=e.target.closest('.inc-btn');if(!b)return;
+  incSize=parseFloat(b.dataset.inc);
+  document.querySelectorAll('.inc-btn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');render();
+});
+
+function boot(){
+  $('perm').classList.add('gone');
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission()
+      .then(s=>{if(s==='granted')attach();else fallback('permission-denied');})
+      .catch(()=>attach());
+  } else { attach(); }
+}
+
+function attach(){
+  window.addEventListener('deviceorientation',onOrient,true);
+  setTimeout(()=>{if(!live)fallback('timeout');},3500);
+}
+
+function fallback(reason){
+  const msgs={
+    'permission-denied':'Motion access denied. Go to Settings > Safari > Motion & Orientation Access, enable it, then reload.',
+    'timeout':'No sensor data. Open this URL directly in Safari (not inside another app) and tap Allow on the motion prompt.',
+  };
+  $('nosensor-msg').textContent=msgs[reason]||'Sensor unavailable.';
+  $('nosensor').style.display='block';
+  $('manual').classList.add('show');
+  $('modetag').textContent='manual';
+  manual=true;render();
+}
+
+function onOrient(e){
+  if(e.beta===null&&e.gamma===null)return;
+  if(!live){live=true;$('dot').classList.add('live');$('modetag').textContent='live';}
+  if(held||manual)return;
+  const rt=-(e.gamma??0)-calT;
+  const rp=-(e.beta??0)-calP;
+  smT+=ALPHA*(rt-smT);smP+=ALPHA*(rp-smP);
+  tilt=+smT.toFixed(2);pitch=+smP.toFixed(2);
+  render();
+}
+
+function render(){
+  const t=tilt,p=pitch;
+  const isLevel=Math.abs(t)<THRESH&&Math.abs(p)<THRESH;
+  const col=v=>Math.abs(v)<THRESH?'var(--ok)':'var(--accent)';
+  $('a-tilt').textContent=fmtDeg(t);$('a-tilt').style.color=col(t);
+  $('a-pitch').textContent=fmtDeg(p);$('a-pitch').style.color=col(p);
+
+  const MAX=44,SC=4.5;
+  const bx=Math.max(-MAX,Math.min(MAX,-t*SC));
+  const by=Math.max(-MAX,Math.min(MAX,p*SC));
+  const bub=$('bub');
+  bub.style.left=(59+bx)+'px';bub.style.top=(59+by)+'px';
+  bub.style.background=isLevel
+    ?'radial-gradient(circle at 35% 30%, rgba(61,255,160,.95), rgba(0,130,70,.45))'
+    :'radial-gradient(circle at 35% 30%, rgba(232,200,74,.95), rgba(130,90,0,.4))';
+  bub.style.border=`2px solid ${isLevel?'var(--ok)':'var(--accent)'}`;
+  bub.style.boxShadow=isLevel?'0 0 16px rgba(61,255,160,.65)':'0 0 10px rgba(232,200,74,.5)';
+  $('arena').classList.toggle('level',isLevel);
+  $('lvlpill').classList.toggle('show',isLevel);
+
+  if(manual){$('mv-t').textContent=fmtDeg(t);$('mv-p').textContent=fmtDeg(p);}
+
+  const w=parseFloat($('d-wb').value)||159;
+  const l=parseFloat($('d-tw').value)||71;
+  const tp=Math.tan(t*Math.PI/180);
+  const pp=Math.tan(p*Math.PI/180);
+  const h={FL:(w/2)*pp+(l/2)*tp,FR:(w/2)*pp-(l/2)*tp,RL:-(w/2)*pp+(l/2)*tp,RR:-(w/2)*pp-(l/2)*tp};
+  const minH=Math.min(...Object.values(h));
+  const span=Math.max(...Object.values(h))-minH||1;
+  for(const k of['FL','FR','RL','RR']){
+    const rise=h[k]-minH,frac=rise/span;
+    $('r'+k).textContent=fmtRise(rise);
+    $('c'+k).textContent=(rise*2.54).toFixed(1)+' cm';
+    $('w'+k).className='wcard '+(rise<0.05?'s0':frac<0.55?'sL':'sH');
+  }
+}
+
+function toggleHold(){
+  if(manual)return;held=!held;
+  $('hold-btn').classList.toggle('on',held);
+  $('hold-badge').classList.toggle('show',held);
+  $('hold-btn').textContent=held?'\u25b6\u00a0\u00a0Resume':'\u23f8\u00a0\u00a0Hold';
+}
+
+function calibrate(){
+  calT+=tilt;calP+=pitch;smT=0;smP=0;tilt=0;pitch=0;
+  if(held)toggleHold();render();
+  const b=$('cal-btn'),orig=b.textContent;
+  b.classList.add('ok');b.textContent='\u2713\u00a0\u00a0Zeroed';
+  setTimeout(()=>{b.classList.remove('ok');b.textContent=orig;},1400);
+}
+
+function nudge(ax,dir){
+  const step=ax==='t'?stepT:stepP;
+  if(ax==='t')tilt=Math.max(-20,Math.min(20,+(rnd(tilt+dir*step,step)).toFixed(2)));
+  else pitch=Math.max(-20,Math.min(20,+(rnd(pitch+dir*step,step)).toFixed(2)));
+  render();
+}
+function pressStart(ax,dir){nudge(ax,dir);rptTimer=setTimeout(()=>{rptIval=setInterval(()=>nudge(ax,dir),110);},380);}
+function pressEnd(){clearTimeout(rptTimer);clearInterval(rptIval);}
+
+document.querySelectorAll('.madj').forEach(btn=>{
+  const ax=btn.dataset.ax,dir=+btn.dataset.d;
+  btn.addEventListener('touchstart',e=>{e.preventDefault();pressStart(ax,dir);},{passive:false});
+  btn.addEventListener('touchend',pressEnd);btn.addEventListener('touchcancel',pressEnd);
+  btn.addEventListener('mousedown',()=>pressStart(ax,dir));
+  btn.addEventListener('mouseup',pressEnd);btn.addEventListener('mouseleave',pressEnd);
+});
+
+['ts','ps'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{
+    const b=e.target.closest('.msb');if(!b)return;
+    const ax=b.dataset.ax,s=parseFloat(b.dataset.s);
+    if(ax==='t')stepT=s;else stepP=s;
+    document.querySelectorAll('#'+id+' .msb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+
+$('d-wb').addEventListener('input',render);
+$('d-tw').addEventListener('input',render);
+
+if('serviceWorker'in navigator){
+  const sw=`const C='buffylevel-v2';
+self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['/'])));self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{caches.open(C).then(c=>c.put(e.request,res.clone()));return res;}).catch(()=>caches.match('/'))));});`;
+  const url=URL.createObjectURL(new Blob([sw],{type:'application/javascript'}));
+  navigator.serviceWorker.register(url,{scope:'/'}).then(()=>URL.revokeObjectURL(url)).catch(()=>{});
+}
+
+(function icon(){
+  const SZ=512,cv=document.createElement('canvas');
+  cv.width=cv.height=SZ;const ctx=cv.getContext('2d'),cx=SZ/2,cy=SZ/2;
+  const R=SZ*0.18;
+  ctx.beginPath();ctx.moveTo(R,0);ctx.lineTo(SZ-R,0);ctx.quadraticCurveTo(SZ,0,SZ,R);
+  ctx.lineTo(SZ,SZ-R);ctx.quadraticCurveTo(SZ,SZ,SZ-R,SZ);
+  ctx.lineTo(R,SZ);ctx.quadraticCurveTo(0,SZ,0,SZ-R);
+  ctx.lineTo(0,R);ctx.quadraticCurveTo(0,0,R,0);
+  ctx.closePath();ctx.fillStyle='#0b1120';ctx.fill();
+  ctx.fillStyle='rgba(232,200,74,0.06)';
+  for(let x=22;x<SZ;x+=22)for(let y=22;y<SZ;y+=22){ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.fill();}
+  const rR=SZ*0.38;
+  ctx.beginPath();ctx.arc(cx,cy,rR,0,Math.PI*2);ctx.strokeStyle='#1d3050';ctx.lineWidth=6;ctx.stroke();
+  [0.22,0.14].forEach(f=>{ctx.beginPath();ctx.arc(cx,cy,SZ*f,0,Math.PI*2);ctx.strokeStyle='#1d3050';ctx.lineWidth=3;ctx.stroke();});
+  ctx.strokeStyle='#1d3050';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-rR,cy);ctx.lineTo(cx+rR,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-rR);ctx.lineTo(cx,cy+rR);ctx.stroke();
+  for(let i=0;i<72;i++){
+    const a=i*5*Math.PI/180,maj=i%9===0,med=i%3===0;
+    const len=maj?22:med?13:7,r0=rR-len;
+    ctx.beginPath();ctx.moveTo(cx+r0*Math.sin(a),cy-r0*Math.cos(a));ctx.lineTo(cx+rR*Math.sin(a),cy-rR*Math.cos(a));
+    ctx.strokeStyle=maj?'#3a5535':'#1d3050';ctx.lineWidth=maj?5:2.5;ctx.stroke();
+  }
+  const bOff=SZ*0.09,bR=SZ*0.11;
+  const bg=ctx.createRadialGradient(cx-bOff-bR*0.3,cy+bOff-bR*0.3,bR*0.1,cx-bOff,cy+bOff,bR);
+  bg.addColorStop(0,'rgba(232,200,74,1)');bg.addColorStop(0.6,'rgba(200,160,30,0.85)');bg.addColorStop(1,'rgba(130,90,0,0.3)');
+  ctx.beginPath();ctx.arc(cx-bOff,cy+bOff,bR,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
+  ctx.strokeStyle='#e8c84a';ctx.lineWidth=4;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx-bOff-bR*0.28,cy+bOff-bR*0.3,bR*0.28,0,Math.PI*2);ctx.fillStyle='rgba(255,255,200,0.35)';ctx.fill();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(232,200,74,0.5)';ctx.shadowBlur=18;
+  ctx.fillStyle='#e8c84a';ctx.font=`bold ${SZ*0.115}px 'SF Mono',Menlo,monospace`;
+  ctx.fillText('BL',cx+SZ*0.18,cy-SZ*0.18);ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(100,140,170,0.7)';ctx.font=`${SZ*0.062}px 'SF Mono',Menlo,monospace`;
+  ctx.fillText('BUFFY LEVEL',cx,cy+rR*0.72);
+  const d=cv.toDataURL('image/png');
+  $('apple-touch-icon').href=d;$('favicon').href=d;
+  const mLink=document.createElement('link');mLink.rel='manifest';
+  mLink.href=URL.createObjectURL(new Blob([JSON.stringify({
+    name:'BuffyLevel',short_name:'BuffyLevel',start_url:'/',display:'standalone',
+    background_color:'#0b1120',theme_color:'#0b1120',orientation:'portrait',
+    icons:[{src:d,sizes:'512x512',type:'image/png',purpose:'any maskable'}]
+  })],{type:'application/manifest+json'}));
+  document.head.appendChild(mLink);
+})();
+
+render();
+</script>
+</body>
+</html>
