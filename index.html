@@ -117,6 +117,8 @@ header {
   border: 1px solid var(--rim); border-radius: 6px; padding: 2px 7px;
 }
 
+
+
 /* ANGLE STRIP */
 #angles {
   display: grid; grid-template-columns: 1fr 1px 1fr;
@@ -130,10 +132,9 @@ header {
 /* BUBBLE ROW */
 #bwrap {
   display: flex; flex-direction: row; align-items: center; justify-content: center;
-  padding: 6px 10px; flex-shrink: 0; gap: 10px;
+  padding: 6px 10px; flex-shrink: 0;
 }
-.dir-col { display: flex; flex-direction: column; justify-content: space-around; height: 118px; flex-shrink: 0; gap: 0; }
-.dir-lbl { font-family: var(--fn-mono); font-size: .65rem; color: var(--dim); letter-spacing: .06em; text-transform: uppercase; line-height: 1; }
+.dir-col { display: none; }
 #bubble-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
 #arena {
   position: relative; width: 118px; height: 118px; border-radius: 50%;
@@ -213,36 +214,64 @@ header {
 .sH .wname, .sH .win { color: #c07070; }
 
 /* ACTIONS */
-#actions { display: flex; gap: 8px; padding: 4px 14px 8px; flex-shrink: 0; }
+#actions { display: flex; gap: 6px; padding: 4px 14px 8px; flex-shrink: 0; }
 .abtn {
   flex: 1; background: transparent; border: 1px solid var(--rim); border-radius: var(--radius);
-  color: var(--muted); font-family: var(--fn-mono); font-size: .72rem;
-  letter-spacing: .08em; text-transform: uppercase; padding: 11px;
+  color: var(--muted); font-family: var(--fn-mono); font-size: .66rem;
+  letter-spacing: .06em; text-transform: uppercase; padding: 10px 4px;
   cursor: pointer; touch-action: manipulation; transition: border-color .15s, color .15s, background .15s;
 }
 .abtn:active, .abtn.on { border-color: var(--accent); color: var(--accent); background: rgba(232,200,74,.06); }
 .abtn.ok { border-color: var(--ok); color: var(--ok); }
 
-/* MANUAL FALLBACK */
-#manual { display: none; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 14px 5px; flex-shrink: 0; }
-#manual.show { display: grid; }
-.mcard { background: var(--panel); border: 1px solid var(--rim); border-radius: var(--radius); padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.mlbl { font-family: var(--fn-mono); font-size: .7rem; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
-.mval { font-family: var(--fn-mono); font-size: 1.15rem; color: var(--accent); min-width: 60px; text-align: center; }
-.mrow { display: flex; gap: 5px; width: 100%; }
-.madj {
-  flex: 1; height: 40px; border-radius: 9px; border: 1px solid var(--rim); background: var(--bg);
-  color: var(--text); font-size: 1.35rem; font-weight: 300; cursor: pointer; touch-action: manipulation;
-  display: flex; align-items: center; justify-content: center; transition: background .1s, border-color .1s;
+
+#help {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: var(--bg); flex-direction: column; overflow-y: auto;
 }
-.madj:active { background: var(--rim); border-color: var(--accent); }
-.msteps { display: flex; gap: 4px; width: 100%; }
-.msb {
-  flex: 1; padding: 4px 0; border-radius: 7px; border: 1px solid var(--rim); background: transparent;
-  color: var(--muted); font-family: var(--fn-mono); font-size: .68rem;
-  cursor: pointer; text-align: center; touch-action: manipulation; transition: color .1s;
+#help.show { display: flex; }
+#help-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px 10px; border-bottom: 1px solid var(--rim);
+  flex-shrink: 0;
 }
-.msb.on { border-color: var(--accent); color: var(--accent); }
+#help-hdr h2 {
+  font-family: var(--fn-disp); font-size: 1.15rem; font-weight: 700;
+  color: var(--accent); letter-spacing: .06em;
+}
+#help-close {
+  background: transparent; border: 1px solid var(--rim); border-radius: 10px;
+  color: var(--muted); font-family: var(--fn-mono); font-size: .72rem;
+  padding: 6px 14px; cursor: pointer; touch-action: manipulation;
+  letter-spacing: .08em;
+}
+#help-close:active { border-color: var(--accent); color: var(--accent); }
+#help-body {
+  padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 20px;
+}
+.hs { display: flex; flex-direction: column; gap: 8px; }
+.hs h3 {
+  font-family: var(--fn-mono); font-size: .72rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent);
+  border-bottom: 1px solid var(--rim); padding-bottom: 5px;
+}
+.hs p, .hs li {
+  font-size: .88rem; line-height: 1.7; color: var(--muted);
+}
+.hs ul { padding-left: 16px; display: flex; flex-direction: column; gap: 4px; }
+.hs b { color: var(--text); }
+.hs .kv { display: flex; gap: 8px; align-items: baseline; }
+.hs .kv .k {
+  font-family: var(--fn-mono); font-size: .72rem; color: var(--accent);
+  border: 1px solid var(--rim); border-radius: 6px; padding: 2px 8px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.hs .kv .v { font-size: .86rem; color: var(--muted); line-height: 1.6; }
+.tip {
+  background: var(--panel); border: 1px solid var(--rim); border-radius: 12px;
+  padding: 12px 14px; font-size: .84rem; color: var(--muted); line-height: 1.65;
+}
+.tip b { color: var(--accent); }
 
 /* NO SENSOR */
 #nosensor {
@@ -325,22 +354,12 @@ header {
   </div>
 
   <div id="bwrap">
-    <div class="dir-col">
-      <span class="dir-lbl">↑ Front</span>
-      <span class="dir-lbl">◀ Driver</span>
-      <span class="dir-lbl">↓ Rear</span>
-    </div>
     <div id="bubble-col">
       <div id="arena">
         <svg width="118" height="118" viewBox="0 0 118 118" id="ticksvg"></svg>
         <div id="bub"></div>
       </div>
       <div id="lvlpill">✦ &nbsp;LEVEL&nbsp; ✦</div>
-    </div>
-    <div class="dir-col" style="align-items:flex-end">
-      <span class="dir-lbl">Front ↑</span>
-      <span class="dir-lbl">Pass. ▶</span>
-      <span class="dir-lbl">Rear ↓</span>
     </div>
   </div>
 
@@ -361,34 +380,6 @@ header {
     </div>
   </div>
 
-  <div id="manual">
-    <div class="mcard">
-      <span class="mlbl">Tilt (side)</span>
-      <span class="mval" id="mv-t">+0.0°</span>
-      <div class="mrow">
-        <button class="madj" data-ax="t" data-d="-1">−</button>
-        <button class="madj" data-ax="t" data-d="1">+</button>
-      </div>
-      <div class="msteps" id="ts">
-        <button class="msb on" data-ax="t" data-s="0.5">½°</button>
-        <button class="msb"    data-ax="t" data-s="1">1°</button>
-        <button class="msb"    data-ax="t" data-s="2">2°</button>
-      </div>
-    </div>
-    <div class="mcard">
-      <span class="mlbl">Pitch (front/rear)</span>
-      <span class="mval" id="mv-p">+0.0°</span>
-      <div class="mrow">
-        <button class="madj" data-ax="p" data-d="-1">−</button>
-        <button class="madj" data-ax="p" data-d="1">+</button>
-      </div>
-      <div class="msteps" id="ps">
-        <button class="msb on" data-ax="p" data-s="0.5">½°</button>
-        <button class="msb"    data-ax="p" data-s="1">1°</button>
-        <button class="msb"    data-ax="p" data-s="2">2°</button>
-      </div>
-    </div>
-  </div>
 
   <div id="wheels">
     <div id="inc-row">
@@ -410,8 +401,64 @@ header {
   </div>
 
   <div id="actions">
-    <button class="abtn" id="hold-btn" onclick="toggleHold()">&#9208; &nbsp;Hold</button>
-    <button class="abtn" id="cal-btn"  onclick="calibrate()">&#9678; &nbsp;Calibrate</button>
+    <button class="abtn" id="hold-btn" onclick="toggleHold()">&#9208; Freeze</button>
+    <button class="abtn" id="cal-btn"  onclick="calibrate()">&#9678; Calibrate</button>
+    <button class="abtn" id="help-btn" onclick="showHelp()">? Help</button>
+  </div>
+</div>
+
+<!-- Help overlay -->
+<div id="help">
+  <div id="help-hdr">
+    <h2>BuffyLevel Help</h2>
+    <button id="help-close" onclick="hideHelp()">✕ Close</button>
+  </div>
+  <div id="help-body">
+
+    <div class="hs">
+      <h3>Phone placement</h3>
+      <p>Place your phone <b>face up</b> on the van floor with the <b>top of the phone pointing toward the front of the van</b> and the <b>left side toward the driver's door</b>. The app reads tilt (side-to-side) and pitch (front-to-back) from the accelerometer.</p>
+    </div>
+
+    <div class="hs">
+      <h3>Reading the results</h3>
+      <ul>
+        <li><b style="color:var(--ok)">Green wheel</b> — stays on the ground, no rise needed</li>
+        <li><b style="color:var(--warn)">Yellow wheel</b> — moderate rise required</li>
+        <li><b style="color:var(--hi)">Red wheel</b> — needs the most rise</li>
+      </ul>
+      <p style="margin-top:4px">Drive or back onto blocks/ramps under the yellow and red wheels until all four read green.</p>
+    </div>
+
+    <div class="hs">
+      <h3>Buttons</h3>
+      <div class="kv"><span class="k">Freeze</span><span class="v">Locks the current reading so you can move the phone while keeping the numbers visible. Tap again to resume live updates.</span></div>
+      <div class="kv"><span class="k">Calibrate</span><span class="v">Zeros out the current tilt and pitch. Use when parked on a surface that isn't perfectly flat relative to the van's axles — park roughly level, then tap Calibrate.</span></div>
+      <div class="kv"><span class="k">Help</span><span class="v">This page.</span></div>
+    </div>
+
+    <div class="hs">
+      <h3>Rise display</h3>
+      <div class="kv"><span class="k">Exact</span><span class="v">Shows rise to the nearest hundredth of an inch.</span></div>
+      <div class="kv"><span class="k">½″</span><span class="v">Rounds up to the nearest half inch — useful if your leveling blocks come in ½″ increments.</span></div>
+      <div class="kv"><span class="k">1″</span><span class="v">Rounds up to the nearest whole inch.</span></div>
+    </div>
+
+    <div class="hs">
+      <h3>Van dimensions</h3>
+      <p><b>Wheelbase (w)</b> — distance between front and rear axles in inches.<br>
+      <b>Track width (l)</b> — distance between left and right wheel centres in inches.<br>
+      Defaults are set to the Winnebago Travato (159″ / 71″).</p>
+    </div>
+
+    <div class="tip">
+      <b>Tip:</b> Add this page to your iPhone Home Screen for instant offline access. In Safari tap Share → <b>Add to Home Screen</b>. The app works with no internet connection after the first load.
+    </div>
+
+    <div class="tip">
+      <b>Tip:</b> If the bubble is moving but the rise numbers seem backwards, your phone may be rotated 180°. Make sure the <b>top of the phone</b> (where the camera is) points toward the <b>front</b> of the van. Tap <b>Calibrate</b> after correcting orientation.
+    </div>
+
   </div>
 </div>
 
@@ -447,8 +494,8 @@ header {
 })();
 
 let tilt=0,pitch=0,calT=0,calP=0,smT=0,smP=0;
-let live=false,held=false,manual=false;
-let stepT=0.5,stepP=0.5,incSize=0;
+let live=false,held=false;
+let incSize=0;
 let rptTimer=null,rptIval=null;
 const ALPHA=0.13,THRESH=0.3;
 const $=id=>document.getElementById(id);
@@ -457,12 +504,9 @@ const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
 const rnd=(v,s)=>Math.round(v/s)*s;
 
 function fmtRise(inches){
-  if(inches<0.05) return '0.0';
-  if(incSize>0){
-    const rounded=Math.ceil(inches/incSize)*incSize;
-    return rounded.toFixed(incSize===0.5?1:0);
-  }
-  return inches.toFixed(1);
+  if(inches<0.005) return '0.00';
+  if(incSize>0){ return (Math.ceil(inches/incSize)*incSize).toFixed(incSize===0.5?1:0); }
+  return inches.toFixed(2);
 }
 
 document.getElementById('inc-row').addEventListener('click',e=>{
@@ -493,15 +537,13 @@ function fallback(reason){
   };
   $('nosensor-msg').textContent=msgs[reason]||'Sensor unavailable.';
   $('nosensor').style.display='block';
-  $('manual').classList.add('show');
-  $('modetag').textContent='manual';
-  manual=true;render();
+  $('modetag').textContent='no sensor';
 }
 
 function onOrient(e){
   if(e.beta===null&&e.gamma===null)return;
   if(!live){live=true;$('dot').classList.add('live');$('modetag').textContent='live';}
-  if(held||manual)return;
+  if(held)return;
   const rt=-(e.gamma??0)-calT;
   const rp=-(e.beta??0)-calP;
   smT+=ALPHA*(rt-smT);smP+=ALPHA*(rp-smP);
@@ -513,8 +555,8 @@ function render(){
   const t=tilt,p=pitch;
   const isLevel=Math.abs(t)<THRESH&&Math.abs(p)<THRESH;
   const col=v=>Math.abs(v)<THRESH?'var(--ok)':'var(--accent)';
-  $('a-tilt').textContent=fmtDeg(t);$('a-tilt').style.color=col(t);
-  $('a-pitch').textContent=fmtDeg(p);$('a-pitch').style.color=col(p);
+  $('a-tilt').textContent=fmtDeg(t);  $('a-tilt').style.color=col(t);
+  $('a-pitch').textContent=fmtDeg(p); $('a-pitch').style.color=col(p);
 
   const MAX=44,SC=4.5;
   const bx=Math.max(-MAX,Math.min(MAX,-t*SC));
@@ -528,8 +570,6 @@ function render(){
   bub.style.boxShadow=isLevel?'0 0 16px rgba(61,255,160,.65)':'0 0 10px rgba(232,200,74,.5)';
   $('arena').classList.toggle('level',isLevel);
   $('lvlpill').classList.toggle('show',isLevel);
-
-  if(manual){$('mv-t').textContent=fmtDeg(t);$('mv-p').textContent=fmtDeg(p);}
 
   const w=parseFloat($('d-wb').value)||159;
   const l=parseFloat($('d-tw').value)||71;
@@ -550,16 +590,19 @@ function toggleHold(){
   if(manual)return;held=!held;
   $('hold-btn').classList.toggle('on',held);
   $('hold-badge').classList.toggle('show',held);
-  $('hold-btn').textContent=held?'\u25b6\u00a0\u00a0Resume':'\u23f8\u00a0\u00a0Hold';
+  $('hold-btn').textContent=held?'\u25b6 Resume':'\u23f8 Freeze';
 }
 
 function calibrate(){
   calT+=tilt;calP+=pitch;smT=0;smP=0;tilt=0;pitch=0;
   if(held)toggleHold();render();
   const b=$('cal-btn'),orig=b.textContent;
-  b.classList.add('ok');b.textContent='\u2713\u00a0\u00a0Zeroed';
+  b.classList.add('ok');b.textContent='\u2713 Zeroed';
   setTimeout(()=>{b.classList.remove('ok');b.textContent=orig;},1400);
 }
+
+function showHelp(){ $('help').classList.add('show'); }
+function hideHelp(){ $('help').classList.remove('show'); }
 
 function nudge(ax,dir){
   const step=ax==='t'?stepT:stepP;
