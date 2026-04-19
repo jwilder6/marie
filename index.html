@@ -401,9 +401,9 @@ header {
   </div>
 
   <div id="actions">
-    <button class="abtn" id="hold-btn" onclick="toggleHold()">&#9208; Freeze</button>
-    <button class="abtn" id="cal-btn"  onclick="calibrate()">&#9678; Calibrate</button>
-    <button class="abtn" id="help-btn" onclick="showHelp()">? Help</button>
+    <button class="abtn" id="hold-btn">&#9208; Freeze</button>
+    <button class="abtn" id="cal-btn">&#9678; Calibrate</button>
+    <button class="abtn" id="help-btn">? Help</button>
   </div>
 </div>
 
@@ -411,7 +411,7 @@ header {
 <div id="help">
   <div id="help-hdr">
     <h2>BuffyLevel Help</h2>
-    <button id="help-close" onclick="hideHelp()">✕ Close</button>
+    <button id="help-close">✕ Close</button>
   </div>
   <div id="help-body">
 
@@ -496,7 +496,6 @@ header {
 let tilt=0,pitch=0,calT=0,calP=0,smT=0,smP=0;
 let live=false,held=false;
 let incSize=0;
-let rptTimer=null,rptIval=null;
 const ALPHA=0.13,THRESH=0.3;
 const $=id=>document.getElementById(id);
 const sgn=v=>v>=0?'+':'';
@@ -504,9 +503,10 @@ const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
 const rnd=(v,s)=>Math.round(v/s)*s;
 
 function fmtRise(inches){
-  if(inches<0.005) return '0.00';
-  if(incSize>0){ return (Math.ceil(inches/incSize)*incSize).toFixed(incSize===0.5?1:0); }
-  return inches.toFixed(2);
+  const dec = incSize===0 ? 2 : incSize===0.5 ? 1 : 0;
+  if(inches<0.005) return (0).toFixed(dec);
+  if(incSize>0) return (Math.ceil(inches/incSize)*incSize).toFixed(dec);
+  return inches.toFixed(dec);
 }
 
 document.getElementById('inc-row').addEventListener('click',e=>{
@@ -559,8 +559,8 @@ function render(){
   $('a-pitch').textContent=fmtDeg(p); $('a-pitch').style.color=col(p);
 
   const MAX=44,SC=4.5;
-  const bx=Math.max(-MAX,Math.min(MAX,-t*SC));
-  const by=Math.max(-MAX,Math.min(MAX,p*SC));
+  const bx=Math.max(-MAX,Math.min(MAX, t*SC));  // bubble toward high side
+  const by=Math.max(-MAX,Math.min(MAX,-p*SC));  // bubble toward high side
   const bub=$('bub');
   bub.style.left=(59+bx)+'px';bub.style.top=(59+by)+'px';
   bub.style.background=isLevel
@@ -587,50 +587,30 @@ function render(){
 }
 
 function toggleHold(){
-  if(manual)return;held=!held;
+  held=!held;
   $('hold-btn').classList.toggle('on',held);
   $('hold-badge').classList.toggle('show',held);
   $('hold-btn').textContent=held?'\u25b6 Resume':'\u23f8 Freeze';
 }
 
 function calibrate(){
-  calT+=tilt;calP+=pitch;smT=0;smP=0;tilt=0;pitch=0;
-  if(held)toggleHold();render();
+  // Absorb current raw sensor offset so readings zero on a flat surface
+  calT += smT; calP += smP;
+  smT=0; smP=0; tilt=0; pitch=0;
+  if(held) toggleHold();
+  render();
   const b=$('cal-btn'),orig=b.textContent;
-  b.classList.add('ok');b.textContent='\u2713 Zeroed';
+  b.classList.add('ok'); b.textContent='\u2713 Zeroed';
   setTimeout(()=>{b.classList.remove('ok');b.textContent=orig;},1400);
 }
 
 function showHelp(){ $('help').classList.add('show'); }
 function hideHelp(){ $('help').classList.remove('show'); }
 
-function nudge(ax,dir){
-  const step=ax==='t'?stepT:stepP;
-  if(ax==='t')tilt=Math.max(-20,Math.min(20,+(rnd(tilt+dir*step,step)).toFixed(2)));
-  else pitch=Math.max(-20,Math.min(20,+(rnd(pitch+dir*step,step)).toFixed(2)));
-  render();
-}
-function pressStart(ax,dir){nudge(ax,dir);rptTimer=setTimeout(()=>{rptIval=setInterval(()=>nudge(ax,dir),110);},380);}
-function pressEnd(){clearTimeout(rptTimer);clearInterval(rptIval);}
-
-document.querySelectorAll('.madj').forEach(btn=>{
-  const ax=btn.dataset.ax,dir=+btn.dataset.d;
-  btn.addEventListener('touchstart',e=>{e.preventDefault();pressStart(ax,dir);},{passive:false});
-  btn.addEventListener('touchend',pressEnd);btn.addEventListener('touchcancel',pressEnd);
-  btn.addEventListener('mousedown',()=>pressStart(ax,dir));
-  btn.addEventListener('mouseup',pressEnd);btn.addEventListener('mouseleave',pressEnd);
-});
-
-['ts','ps'].forEach(id=>{
-  document.getElementById(id).addEventListener('click',e=>{
-    const b=e.target.closest('.msb');if(!b)return;
-    const ax=b.dataset.ax,s=parseFloat(b.dataset.s);
-    if(ax==='t')stepT=s;else stepP=s;
-    document.querySelectorAll('#'+id+' .msb').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');
-  });
-});
-
+$('hold-btn').addEventListener('click', toggleHold);
+$('cal-btn').addEventListener('click', calibrate);
+$('help-btn').addEventListener('click', showHelp);
+$('help-close').addEventListener('click', hideHelp);
 $('d-wb').addEventListener('input',render);
 $('d-tw').addEventListener('input',render);
 
