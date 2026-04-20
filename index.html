@@ -423,7 +423,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v1.6</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v1.7</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -588,9 +588,32 @@ header {
   }
 })();
 
+// ── Persistent storage — localStorage with cookie fallback (for Brave Android) ──
+function storeSet(key, val) {
+  try { localStorage.setItem(key, val); } catch(e) {}
+  // Cookie fallback: 10-year expiry, SameSite=Lax works on all browsers
+  try {
+    const exp = new Date(Date.now() + 315360000000).toUTCString();
+    document.cookie = key+'='+val+';expires='+exp+';path=/;SameSite=Lax';
+  } catch(e) {}
+}
+function storeGet(key) {
+  // Try localStorage first
+  try {
+    const v = localStorage.getItem(key);
+    if (v !== null) return v;
+  } catch(e) {}
+  // Fall back to cookie
+  try {
+    const m = document.cookie.match('(?:^|; )'+key+'=([^;]*)');
+    if (m) return decodeURIComponent(m[1]);
+  } catch(e) {}
+  return null;
+}
+
 let tilt=0,pitch=0,smT=0,smP=0,rawG=0,rawB=0;
-let calT=parseFloat(localStorage.getItem('bl_calT')||'0');
-let calP=parseFloat(localStorage.getItem('bl_calP')||'0');
+let calT=parseFloat(storeGet('bl_calT')||'0');
+let calP=parseFloat(storeGet('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
 const ALPHA=0.04,THRESH=0.6;  // heavy smoothing + wide dead-zone to suppress sensor noise
@@ -709,10 +732,8 @@ function doCalibrate(){
   // calT is set so that -(rawG) - calT = 0  =>  calT = -rawG
   calT = -rawG;
   calP = -rawB;
-  try {
-    localStorage.setItem('bl_calT', calT);
-    localStorage.setItem('bl_calP', calP);
-  } catch(e){}
+  storeSet('bl_calT', calT);
+  storeSet('bl_calP', calP);
   // Reset smoothing from scratch against new cal
   smT=0; smP=0; tilt=0; pitch=0;
   if(held) toggleHold();
