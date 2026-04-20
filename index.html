@@ -329,40 +329,67 @@ header {
   <h1>BuffyLevel</h1>
   <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
 
-  <svg width="210" height="136" viewBox="0 0 210 136">
+  <svg width="220" height="200" viewBox="0 0 220 200">
     <defs>
       <marker id="arr" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
         <polygon points="0,4 2.5,0 5,4" fill="#e8c84a"/>
       </marker>
     </defs>
-    <!-- Van body -->
-    <rect x="65" y="28" width="80" height="56" rx="7" fill="#121c30" stroke="#1d3050" stroke-width="2"/>
-    <!-- Windshield / front -->
-    <rect x="65" y="28" width="80" height="16" rx="5" fill="#1a2d48" stroke="#1d3050" stroke-width="1"/>
-    <!-- Wheels -->
-    <rect x="58" y="32" width="8" height="12" rx="2" fill="#2a3a50"/>
-    <rect x="58" y="72" width="8" height="12" rx="2" fill="#2a3a50"/>
-    <rect x="144" y="32" width="8" height="12" rx="2" fill="#2a3a50"/>
-    <rect x="144" y="72" width="8" height="12" rx="2" fill="#2a3a50"/>
-    <!-- FRONT label + arrow -->
-    <text x="105" y="22" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="9" fill="#e8c84a" letter-spacing="2">FRONT</text>
-    <!-- REAR label -->
-    <text x="105" y="102" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="9" fill="#5a7898" letter-spacing="2">REAR</text>
-    <!-- DRIVER label -->
-    <text x="22" y="60" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="8" fill="#5a7898" transform="rotate(-90,22,60)">DRIVER</text>
-    <!-- Phone inside van -->
-    <rect x="80" y="36" width="50" height="44" rx="5" fill="#0b1120" stroke="#e8c84a" stroke-width="1.5"/>
-    <!-- Phone notch at top = front -->
-    <rect x="99" y="36" width="12" height="3.5" rx="1.5" fill="#e8c84a"/>
-    <!-- Phone screen -->
-    <rect x="83" y="41" width="44" height="35" rx="3" fill="#121c30"/>
-    <!-- Bubble circles -->
-    <circle cx="105" cy="58" r="10" fill="none" stroke="#1d3050" stroke-width="1"/>
-    <circle cx="105" cy="58" r="4.5" fill="rgba(232,200,74,.9)" stroke="#e8c84a" stroke-width="1.2"/>
+
+    <!-- Van body — 78px wide × 160px tall ≈ 2.05:1, close to Travato 159/71=2.24 -->
+    <rect x="71" y="16" width="78" height="168" rx="9"
+          fill="#121c30" stroke="#1d3050" stroke-width="2"/>
+    <!-- Cab / windshield band at front -->
+    <rect x="71" y="16" width="78" height="20" rx="7"
+          fill="#1a2d48" stroke="#1d3050" stroke-width="1"/>
+    <!-- Rear bumper band -->
+    <rect x="71" y="160" width="78" height="8" rx="3"
+          fill="#1a2d48" stroke="#1d3050" stroke-width="1"/>
+
+    <!-- Wheels — top-down silhouettes -->
+    <!-- Front left -->
+    <rect x="55" y="22" width="16" height="11" rx="2" fill="#2a3a50"/>
+    <!-- Rear left -->
+    <rect x="55" y="163" width="16" height="11" rx="2" fill="#2a3a50"/>
+    <!-- Front right -->
+    <rect x="149" y="22" width="16" height="11" rx="2" fill="#2a3a50"/>
+    <!-- Rear right -->
+    <rect x="149" y="163" width="16" height="11" rx="2" fill="#2a3a50"/>
+
+    <!-- Wheel axle lines (subtle) -->
+    <line x1="55" y1="27" x2="71" y2="27" stroke="#1d3050" stroke-width="1"/>
+    <line x1="149" y1="27" x2="165" y2="27" stroke="#1d3050" stroke-width="1"/>
+    <line x1="55" y1="168" x2="71" y2="168" stroke="#1d3050" stroke-width="1"/>
+    <line x1="149" y1="168" x2="165" y2="168" stroke="#1d3050" stroke-width="1"/>
+
+    <!-- Phone inside van — portrait, top notch = FRONT -->
+    <rect x="91" y="50" width="38" height="62" rx="5"
+          fill="#0b1120" stroke="#e8c84a" stroke-width="1.5"/>
+    <!-- Notch at top (front of van) -->
+    <rect x="101" y="50" width="12" height="3.5" rx="1.5" fill="#e8c84a"/>
+    <!-- Screen -->
+    <rect x="94" y="56" width="32" height="52" rx="3" fill="#121c30"/>
+    <!-- Bubble level on screen -->
+    <circle cx="110" cy="82" r="10" fill="none" stroke="#1d3050" stroke-width="1"/>
+    <circle cx="110" cy="82" r="4.5"
+            fill="rgba(232,200,74,.9)" stroke="#e8c84a" stroke-width="1.2"/>
     <!-- "face up" label -->
-    <text x="105" y="84" text-anchor="middle" font-family="SF Mono,Menlo,monospace" font-size="7.5" fill="#8ab0cc">face up</text>
-    <!-- Arrow: phone notch toward FRONT -->
-    <line x1="105" y1="28" x2="105" y2="36" stroke="#e8c84a" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="110" y="115" text-anchor="middle"
+          font-family="SF Mono,Menlo,monospace" font-size="7" fill="#8ab0cc">face up</text>
+
+    <!-- FRONT label + arrow pointing at van -->
+    <text x="110" y="10" text-anchor="middle"
+          font-family="SF Mono,Menlo,monospace" font-size="9" fill="#e8c84a" letter-spacing="2">FRONT</text>
+    <line x1="110" y1="12" x2="110" y2="16" stroke="#e8c84a" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- REAR label -->
+    <text x="110" y="197" text-anchor="middle"
+          font-family="SF Mono,Menlo,monospace" font-size="9" fill="#5a7898" letter-spacing="2">REAR</text>
+
+    <!-- DRIVER label (rotated, left side) -->
+    <text x="30" y="100" text-anchor="middle"
+          font-family="SF Mono,Menlo,monospace" font-size="8" fill="#5a7898"
+          transform="rotate(-90,30,100)">DRIVER</text>
   </svg>
 
   <p class="orient-caption">
@@ -547,7 +574,7 @@ let calT=parseFloat(localStorage.getItem('bl_calT')||'0');
 let calP=parseFloat(localStorage.getItem('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
-const ALPHA=0.13,THRESH=0.3;
+const ALPHA=0.06,THRESH=0.4;  // more smoothing, slightly wider level zone
 const $=id=>document.getElementById(id);
 const sgn=v=>v>=0?'+':'';
 const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
@@ -626,8 +653,11 @@ function render(){
 
   const w=parseFloat($('d-wb').value)||159;
   const l=parseFloat($('d-tw').value)||71;
-  const tp=Math.tan(t*Math.PI/180);
-  const pp=Math.tan(p*Math.PI/180);
+  // Dead-zone: if both angles within threshold treat as perfectly flat
+  const tEff = Math.abs(t)<THRESH ? 0 : t;
+  const pEff = Math.abs(p)<THRESH ? 0 : p;
+  const tp=Math.tan(tEff*Math.PI/180);
+  const pp=Math.tan(pEff*Math.PI/180);
   const h={FL:(w/2)*pp+(l/2)*tp,FR:(w/2)*pp-(l/2)*tp,RL:-(w/2)*pp+(l/2)*tp,RR:-(w/2)*pp-(l/2)*tp};
   const minH=Math.min(...Object.values(h));
   const span=Math.max(...Object.values(h))-minH||1;
