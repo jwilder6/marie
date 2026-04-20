@@ -340,7 +340,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v1.5</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -433,7 +433,7 @@ header {
     <div class="hs">
       <h3>Buttons</h3>
       <div class="kv"><span class="k">Freeze</span><span class="v">Locks the current reading so you can move the phone while keeping the numbers visible. Tap again to resume live updates.</span></div>
-      <div class="kv"><span class="k">Calibrate</span><span class="v">Zeros out the current tilt and pitch. Use when parked on a surface that isn't perfectly flat relative to the van's axles — park roughly level, then tap Calibrate.</span></div>
+      <div class="kv"><span class="k">Calibrate</span><span class="v">Corrects for any angle introduced by your phone case or uneven floor. Place the phone flat on the van floor, tap Calibrate, and confirm. The app zeroes tilt and pitch at that position and saves the setting — it persists across sessions so you only need to redo it if you change cases or surfaces.</span></div>
       <div class="kv"><span class="k">Help</span><span class="v">This page.</span></div>
     </div>
 
@@ -493,7 +493,9 @@ header {
   }
 })();
 
-let tilt=0,pitch=0,calT=0,calP=0,smT=0,smP=0;
+let tilt=0,pitch=0,smT=0,smP=0;
+let calT=parseFloat(localStorage.getItem('calT')||'0');
+let calP=parseFloat(localStorage.getItem('calP')||'0');
 let live=false,held=false;
 let incSize=0;
 const ALPHA=0.13,THRESH=0.3;
@@ -559,8 +561,8 @@ function render(){
   $('a-pitch').textContent=fmtDeg(p); $('a-pitch').style.color=col(p);
 
   const MAX=44,SC=4.5;
-  const bx=Math.max(-MAX,Math.min(MAX, t*SC));  // bubble toward high side
-  const by=Math.max(-MAX,Math.min(MAX,-p*SC));  // bubble toward high side
+  const bx=Math.max(-MAX,Math.min(MAX, t*SC));  // bubble toward high side (tilt)
+  const by=Math.max(-MAX,Math.min(MAX, p*SC));  // bubble toward high side (pitch)
   const bub=$('bub');
   bub.style.left=(59+bx)+'px';bub.style.top=(59+by)+'px';
   bub.style.background=isLevel
@@ -594,14 +596,17 @@ function toggleHold(){
 }
 
 function calibrate(){
-  // Absorb current raw sensor offset so readings zero on a flat surface
+  // Confirmation to prevent accidental press
+  const confirmed = confirm('Calibrate now?\n\nPhone must be lying flat on the van floor. This will zero tilt and pitch at the current position and save the setting.');
+  if(!confirmed) return;
   calT += smT; calP += smP;
+  try { localStorage.setItem('calT', calT); localStorage.setItem('calP', calP); } catch(e){}
   smT=0; smP=0; tilt=0; pitch=0;
   if(held) toggleHold();
   render();
   const b=$('cal-btn'),orig=b.textContent;
-  b.classList.add('ok'); b.textContent='\u2713 Zeroed';
-  setTimeout(()=>{b.classList.remove('ok');b.textContent=orig;},1400);
+  b.classList.add('ok'); b.textContent='\u2713 Saved';
+  setTimeout(()=>{b.classList.remove('ok');b.textContent=orig;},1600);
 }
 
 function showHelp(){ $('help').classList.add('show'); }
