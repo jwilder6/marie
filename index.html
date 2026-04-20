@@ -213,6 +213,43 @@ header {
 .sH .wrise { color: var(--hi); }
 .sH .wname, .sH .win { color: #c07070; }
 
+/* CONFIRM MODAL */
+#cal-modal {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,.7); align-items: center; justify-content: center;
+  padding: 28px;
+}
+#cal-modal.show { display: flex; }
+#cal-modal-box {
+  background: var(--panel); border: 1px solid var(--accent);
+  border-radius: 18px; padding: 24px 22px 18px;
+  max-width: 320px; width: 100%;
+  box-shadow: 0 0 40px rgba(232,200,74,.2);
+  display: flex; flex-direction: column; gap: 14px;
+}
+#cal-modal h3 {
+  font-family: var(--fn-disp); font-size: 1.1rem; font-weight: 700;
+  color: var(--accent); letter-spacing: .06em;
+}
+#cal-modal p {
+  font-size: .88rem; color: var(--muted); line-height: 1.65;
+}
+#cal-modal p b { color: var(--text); }
+.modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+.modal-btn {
+  flex: 1; padding: 13px; border-radius: 12px; border: 1px solid var(--rim);
+  font-family: var(--fn-mono); font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; cursor: pointer; touch-action: manipulation;
+  transition: background .15s, border-color .15s, color .15s;
+}
+#modal-yes {
+  background: var(--accent); color: #0a0c00; border-color: var(--accent);
+  font-weight: 700;
+}
+#modal-yes:active { background: #c8a830; }
+#modal-cancel { background: transparent; color: var(--muted); }
+#modal-cancel:active { border-color: var(--muted); color: var(--text); }
+
 /* ACTIONS */
 #actions { display: flex; gap: 6px; padding: 4px 14px 8px; flex-shrink: 0; }
 .abtn {
@@ -467,6 +504,18 @@ header {
   <br><button onclick="this.parentElement.style.display='none'">Dismiss</button>
 </div>
 
+<!-- Calibrate confirmation modal -->
+<div id="cal-modal">
+  <div id="cal-modal-box">
+    <h3>Calibrate? Really?</h3>
+    <p>Phone must be on a <b>perfectly flat surface</b>.<br>This will zero tilt and pitch at the current position. The setting is saved and remembered.</p>
+    <div class="modal-btns">
+      <button class="modal-btn" id="modal-cancel">Cancel</button>
+      <button class="modal-btn" id="modal-yes">Yes, Calibrate</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function drawTicks() {
   const svg=document.getElementById('ticksvg'),cx=59,cy=59,r1=55;
@@ -493,9 +542,9 @@ header {
   }
 })();
 
-let tilt=0,pitch=0,smT=0,smP=0;
-let calT=parseFloat(localStorage.getItem('calT')||'0');
-let calP=parseFloat(localStorage.getItem('calP')||'0');
+let tilt=0,pitch=0,smT=0,smP=0,rawG=0,rawB=0;
+let calT=parseFloat(localStorage.getItem('bl_calT')||'0');
+let calP=parseFloat(localStorage.getItem('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
 const ALPHA=0.13,THRESH=0.3;
@@ -546,8 +595,10 @@ function onOrient(e){
   if(e.beta===null&&e.gamma===null)return;
   if(!live){live=true;$('dot').classList.add('live');$('modetag').textContent='live';}
   if(held)return;
-  const rt=-(e.gamma??0)-calT;
-  const rp=-(e.beta??0)-calP;
+  rawG = e.gamma??0;
+  rawB = e.beta??0;
+  const rt=-(rawG)-calT;
+  const rp=-(rawB)-calP;
   smT+=ALPHA*(rt-smT);smP+=ALPHA*(rp-smP);
   tilt=+smT.toFixed(2);pitch=+smP.toFixed(2);
   render();
@@ -596,17 +647,27 @@ function toggleHold(){
 }
 
 function calibrate(){
-  // Confirmation to prevent accidental press
-  const confirmed = confirm('Calibrate now?\n\nPhone must be lying flat on the van floor. This will zero tilt and pitch at the current position and save the setting.');
-  if(!confirmed) return;
-  calT += smT; calP += smP;
-  try { localStorage.setItem('calT', calT); localStorage.setItem('calP', calP); } catch(e){}
+  // Show custom modal — avoids iOS PWA confirm() unreliability
+  $('cal-modal').classList.add('show');
+}
+
+function doCalibrate(){
+  $('cal-modal').classList.remove('show');
+  // Capture raw sensor at this moment as the new zero reference
+  // calT is set so that -(rawG) - calT = 0  =>  calT = -rawG
+  calT = -rawG;
+  calP = -rawB;
+  try {
+    localStorage.setItem('bl_calT', calT);
+    localStorage.setItem('bl_calP', calP);
+  } catch(e){}
+  // Reset smoothing from scratch against new cal
   smT=0; smP=0; tilt=0; pitch=0;
   if(held) toggleHold();
   render();
-  const b=$('cal-btn'),orig=b.textContent;
+  const b=$('cal-btn'), orig=b.textContent;
   b.classList.add('ok'); b.textContent='\u2713 Saved';
-  setTimeout(()=>{b.classList.remove('ok');b.textContent=orig;},1600);
+  setTimeout(()=>{ b.classList.remove('ok'); b.textContent=orig; }, 1600);
 }
 
 function showHelp(){ $('help').classList.add('show'); }
@@ -616,6 +677,8 @@ $('hold-btn').addEventListener('click', toggleHold);
 $('cal-btn').addEventListener('click', calibrate);
 $('help-btn').addEventListener('click', showHelp);
 $('help-close').addEventListener('click', hideHelp);
+$('modal-yes').addEventListener('click', doCalibrate);
+$('modal-cancel').addEventListener('click', ()=>$('cal-modal').classList.remove('show'));
 $('d-wb').addEventListener('input',render);
 $('d-tw').addEventListener('input',render);
 
