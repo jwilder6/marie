@@ -170,7 +170,7 @@ header {
 .dunit { font-size: .7rem; color: var(--muted); white-space: nowrap; }
 
 /* WHEEL GRID */
-#wheels { padding: 0 14px 5px; flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+#wheels { padding: 0 14px 5px; flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 #inc-row { display: flex; align-items: center; gap: 6px; padding: 0 2px; }
 .inc-lbl { font-family: var(--fn-mono); font-size: .68rem; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
 .inc-btns { display: flex; gap: 4px; }
@@ -310,7 +310,26 @@ header {
 }
 .tip b { color: var(--accent); }
 
-/* NO SENSOR */
+/* Compact layout for smaller screens (iPhone 8: 375×667, SE: 375×667) */
+@media (max-height: 700px) {
+  .acell { padding: 4px 0 3px; }
+  #bwrap { padding: 3px 10px; }
+  #arena { width: 96px; height: 96px; }
+  #arena svg { width: 96px; height: 96px; }
+  #bub { width: 22px; height: 22px; }
+  #lvlpill { height: 11px; font-size: .58rem; }
+  #dims { padding: 3px 14px; }
+  .dcard { padding: 4px 10px; }
+  .dlbl { margin-bottom: 1px; }
+  .dinput { padding: 3px 5px; font-size: .9rem; }
+  #wheels { gap: 3px; }
+  .wcard { padding: 5px 6px 4px; }
+  .wname { font-size: .62rem; margin-top: 2px; }
+  .wrise { font-size: 1.55rem; }
+  .win, .wcm { font-size: .62rem; }
+  #actions { padding: 2px 14px 6px; }
+  .abtn { padding: 8px 4px; font-size: .62rem; }
+}
 #nosensor {
   display: none; position: fixed; bottom: 0; left: 0; right: 0;
   background: #150e02; border-top: 1px solid var(--warn);
@@ -404,7 +423,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v1.5</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v1.6</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -574,7 +593,7 @@ let calT=parseFloat(localStorage.getItem('bl_calT')||'0');
 let calP=parseFloat(localStorage.getItem('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
-const ALPHA=0.06,THRESH=0.4;  // more smoothing, slightly wider level zone
+const ALPHA=0.04,THRESH=0.6;  // heavy smoothing + wide dead-zone to suppress sensor noise
 const $=id=>document.getElementById(id);
 const sgn=v=>v>=0?'+':'';
 const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
@@ -638,11 +657,14 @@ function render(){
   $('a-tilt').textContent=fmtDeg(t);  $('a-tilt').style.color=col(t);
   $('a-pitch').textContent=fmtDeg(p); $('a-pitch').style.color=col(p);
 
-  const MAX=44,SC=4.5;
+  const arena=$('arena');
+  const aSz=arena.offsetWidth||118;
+  const aCtr=aSz/2;
+  const MAX=aCtr-20, SC=aCtr/26;
   const bx=Math.max(-MAX,Math.min(MAX, t*SC));  // bubble toward high side (tilt)
   const by=Math.max(-MAX,Math.min(MAX, p*SC));  // bubble toward high side (pitch)
   const bub=$('bub');
-  bub.style.left=(59+bx)+'px';bub.style.top=(59+by)+'px';
+  bub.style.left=(aCtr+bx)+'px';bub.style.top=(aCtr+by)+'px';
   bub.style.background=isLevel
     ?'radial-gradient(circle at 35% 30%, rgba(61,255,160,.95), rgba(0,130,70,.45))'
     :'radial-gradient(circle at 35% 30%, rgba(232,200,74,.95), rgba(130,90,0,.4))';
