@@ -80,13 +80,14 @@ body::before {
 
 /* HOLD BADGE */
 #hold-badge {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  position: absolute; top: 50%; left: 0;
+  transform: translateY(-50%);
   background: rgba(255,179,64,.15); border: 1px solid var(--warn);
-  border-radius: 10px; padding: 5px 18px;
-  font-family: var(--fn-mono); font-size: .72rem;
-  letter-spacing: .14em; color: var(--warn); text-transform: uppercase;
+  border-radius: 10px; padding: 6px 10px;
+  font-family: var(--fn-mono); font-size: .7rem;
+  letter-spacing: .1em; color: var(--warn); text-transform: uppercase;
   opacity: 0; transition: opacity .3s; pointer-events: none;
-  white-space: nowrap;
+  white-space: normal; text-align: center; width: 72px; line-height: 1.4;
 }
 #hold-badge.show { opacity: 1; }
 
@@ -177,8 +178,8 @@ header {
 .inc-lbl { font-family: var(--fn-mono); font-size: .68rem; color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
 .inc-btns { display: flex; gap: 4px; }
 .inc-btn {
-  padding: 3px 10px; border-radius: 7px; border: 1px solid var(--rim); background: transparent;
-  color: var(--dim); font-family: var(--fn-mono); font-size: .68rem; cursor: pointer; touch-action: manipulation;
+  padding: 5px 13px; border-radius: 7px; border: 1px solid var(--rim); background: transparent;
+  color: var(--dim); font-family: var(--fn-mono); font-size: .74rem; cursor: pointer; touch-action: manipulation;
   transition: border-color .1s, color .1s;
 }
 .inc-btn.on { border-color: var(--accent); color: var(--accent); }
@@ -354,7 +355,7 @@ header {
 <body>
 
 <div id="perm">
-  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.3</span></h1>
+  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.4</span></h1>
   <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
 
   <svg width="220" height="200" viewBox="0 0 220 200">
@@ -431,7 +432,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.3</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.4</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -628,7 +629,7 @@ let calP=parseFloat(storeGet('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
 const ALPHA=0.04,THRESH=0.6;   // smoothing + bubble level threshold
-const RISE_NOISE=0.12;          // rises below this inch threshold are sensor noise — zero them
+const RISE_NOISE=0.20;          // exact-mode noise floor in inches (~5mm)
 const $=id=>document.getElementById(id);
 const sgn=v=>v>=0?'+':'';
 const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
@@ -636,8 +637,12 @@ const rnd=(v,s)=>Math.round(v/s)*s;
 
 function fmtRise(inches){
   const dec = incSize===0 ? 2 : incSize===0.5 ? 1 : 0;
-  if(inches<0.005) return (0).toFixed(dec);
-  if(incSize>0) return (Math.ceil(inches/incSize)*incSize).toFixed(dec);
+  if(inches<=0) return (0).toFixed(dec);
+  if(incSize>0){
+    // Only show a rise if it's at least half the increment — stops 0.13" jumping to 1"
+    if(inches < incSize*0.5) return (0).toFixed(dec);
+    return (Math.ceil(inches/incSize)*incSize).toFixed(dec);
+  }
   return inches.toFixed(dec);
 }
 
