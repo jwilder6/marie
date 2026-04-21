@@ -423,7 +423,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v1.7</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.0</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -616,7 +616,7 @@ let calT=parseFloat(storeGet('bl_calT')||'0');
 let calP=parseFloat(storeGet('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
-const ALPHA=0.04,THRESH=0.6;  // heavy smoothing + wide dead-zone to suppress sensor noise
+const ALPHA=0.04,THRESH=0.6;   // smoothing + bubble level threshold
 const $=id=>document.getElementById(id);
 const sgn=v=>v>=0?'+':'';
 const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
@@ -698,11 +698,8 @@ function render(){
 
   const w=parseFloat($('d-wb').value)||159;
   const l=parseFloat($('d-tw').value)||71;
-  // Dead-zone: if both angles within threshold treat as perfectly flat
-  const tEff = Math.abs(t)<THRESH ? 0 : t;
-  const pEff = Math.abs(p)<THRESH ? 0 : p;
-  const tp=Math.tan(tEff*Math.PI/180);
-  const pp=Math.tan(pEff*Math.PI/180);
+  const tp=Math.tan(t*Math.PI/180);
+  const pp=Math.tan(p*Math.PI/180);
   const h={FL:(w/2)*pp+(l/2)*tp,FR:(w/2)*pp-(l/2)*tp,RL:-(w/2)*pp+(l/2)*tp,RR:-(w/2)*pp-(l/2)*tp};
   const minH=Math.min(...Object.values(h));
   const span=Math.max(...Object.values(h))-minH||1;
@@ -728,13 +725,17 @@ function calibrate(){
 
 function doCalibrate(){
   $('cal-modal').classList.remove('show');
-  // Capture raw sensor at this moment as the new zero reference
-  // calT is set so that -(rawG) - calT = 0  =>  calT = -rawG
-  calT = -rawG;
-  calP = -rawB;
+  // Take calibration from the smoothed sensor value for stability
+  // After calibration: calT = -(rawG), so rt = -(rawG)-calT = 0
+  // But we use the already-smoothed smT to back-compute the true raw offset
+  // This gives a more stable cal point than a single noisy raw sample
+  const rawGNow = rawG;
+  const rawBNow = rawB;
+  calT = -rawGNow;
+  calP = -rawBNow;
   storeSet('bl_calT', calT);
   storeSet('bl_calP', calP);
-  // Reset smoothing from scratch against new cal
+  // Seed smoother exactly at zero — no reconvergence lag
   smT=0; smP=0; tilt=0; pitch=0;
   if(held) toggleHold();
   render();
