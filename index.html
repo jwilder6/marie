@@ -345,7 +345,7 @@ header {
 <body>
 
 <div id="perm">
-  <h1>BuffyLevel</h1>
+  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.1</span></h1>
   <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
 
   <svg width="220" height="200" viewBox="0 0 220 200">
@@ -423,7 +423,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.0</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.1</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -617,6 +617,7 @@ let calP=parseFloat(storeGet('bl_calP')||'0');
 let live=false,held=false;
 let incSize=0;
 const ALPHA=0.04,THRESH=0.6;   // smoothing + bubble level threshold
+const RISE_NOISE=0.12;          // rises below this inch threshold are sensor noise — zero them
 const $=id=>document.getElementById(id);
 const sgn=v=>v>=0?'+':'';
 const fmtDeg=v=>(Math.abs(v)<0.05?'+0.0':sgn(v)+v.toFixed(1))+'°';
@@ -704,7 +705,9 @@ function render(){
   const minH=Math.min(...Object.values(h));
   const span=Math.max(...Object.values(h))-minH||1;
   for(const k of['FL','FR','RL','RR']){
-    const rise=h[k]-minH,frac=rise/span;
+    const riseRaw=h[k]-minH;
+    const rise = riseRaw < RISE_NOISE ? 0 : riseRaw;  // suppress sensor noise floor
+    const frac=riseRaw/span;
     $('r'+k).textContent=fmtRise(rise);
     $('c'+k).textContent=(rise*2.54).toFixed(1)+' cm';
     $('w'+k).className='wcard '+(rise<0.05?'s0':frac<0.55?'sL':'sH');
