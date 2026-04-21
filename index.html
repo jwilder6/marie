@@ -277,14 +277,21 @@ header {
   color: var(--accent); letter-spacing: .06em;
 }
 #help-close {
-  background: transparent; border: 1px solid var(--rim); border-radius: 10px;
-  color: var(--muted); font-family: var(--fn-mono); font-size: .72rem;
-  padding: 6px 14px; cursor: pointer; touch-action: manipulation;
+  background: var(--accent); border: none; border-radius: 10px;
+  color: #0a0c00; font-family: var(--fn-mono); font-size: .72rem;
+  font-weight: 700; padding: 8px 16px; cursor: pointer; touch-action: manipulation;
   letter-spacing: .08em;
 }
-#help-close:active { border-color: var(--accent); color: var(--accent); }
+#help-close:active { background: #c8a830; }
+#help-close-bottom {
+  background: transparent; border: 1px solid var(--accent); border-radius: 12px;
+  color: var(--accent); font-family: var(--fn-mono); font-size: .78rem;
+  font-weight: 700; padding: 14px; cursor: pointer; touch-action: manipulation;
+  letter-spacing: .1em; text-transform: uppercase; width: 100%;
+}
+#help-close-bottom:active { background: rgba(232,200,74,.1); }
 #help-body {
-  padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 20px;
+  padding: 18px 20px 28px; display: flex; flex-direction: column; gap: 20px;
 }
 .hs { display: flex; flex-direction: column; gap: 8px; }
 .hs h3 {
@@ -345,7 +352,7 @@ header {
 <body>
 
 <div id="perm">
-  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.1</span></h1>
+  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.2</span></h1>
   <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
 
   <svg width="220" height="200" viewBox="0 0 220 200">
@@ -423,7 +430,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.1</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.2</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -516,7 +523,7 @@ header {
     <div class="hs">
       <h3>Buttons</h3>
       <div class="kv"><span class="k">Freeze</span><span class="v">Locks the current reading so you can move the phone while keeping the numbers visible. Tap again to resume live updates.</span></div>
-      <div class="kv"><span class="k">Calibrate</span><span class="v">Corrects for any angle introduced by your phone case or uneven floor. Place the phone flat on the van floor, tap Calibrate, and confirm. The app zeroes tilt and pitch at that position and saves the setting — it persists across sessions so you only need to redo it if you change cases or surfaces.</span></div>
+      <div class="kv"><span class="k">Calibrate</span><span class="v">Corrects for tilt introduced by your phone's camera lens bump or phone case, which prevent the phone from lying perfectly flat. Place the phone on a <b>known flat surface</b> (a table, countertop, or spirit level), tap Calibrate and confirm. The setting is saved and persists across sessions — only redo it if you change cases.</span></div>
       <div class="kv"><span class="k">Help</span><span class="v">This page.</span></div>
     </div>
 
@@ -541,6 +548,8 @@ header {
     <div class="tip">
       <b>Tip:</b> If the bubble is moving but the rise numbers seem backwards, your phone may be rotated 180°. Make sure the <b>top of the phone</b> (where the camera is) points toward the <b>front</b> of the van. Tap <b>Calibrate</b> after correcting orientation.
     </div>
+
+    <button id="help-close-bottom" onclick="hideHelp()">✕ Close Help</button>
 
   </div>
 </div>
