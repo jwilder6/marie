@@ -133,22 +133,22 @@ header {
 
 /* BUBBLE ROW */
 #bwrap {
-  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  display: flex; flex-direction: row; align-items: center;
   padding: 6px 10px; flex-shrink: 0;
 }
 #bwrap-left {
-  flex: 1; display: flex; align-items: center; justify-content: center;
+  flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0;
 }
 #hold-badge {
   background: rgba(255,179,64,.15); border: 1px solid var(--warn);
   border-radius: 10px; padding: 6px 10px;
-  font-family: var(--fn-mono); font-size: .7rem;
-  letter-spacing: .08em; color: var(--warn); text-transform: uppercase;
+  font-family: var(--fn-mono); font-size: .68rem;
+  letter-spacing: .07em; color: var(--warn); text-transform: uppercase;
   opacity: 0; transition: opacity .3s; pointer-events: none;
-  white-space: normal; text-align: center; max-width: 80px; line-height: 1.45;
+  white-space: normal; text-align: center; max-width: 80px; line-height: 1.5;
 }
 #hold-badge.show { opacity: 1; }
-#bwrap-right { flex: 1; }
+#bwrap-right { flex: 1; min-width: 0; }
 .dir-col { display: none; }
 #bubble-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
 #arena {
@@ -367,7 +367,7 @@ header {
 <body>
 
 <div id="perm">
-  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.5</span></h1>
+  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.6</span></h1>
   <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
 
   <svg width="220" height="200" viewBox="0 0 220 200">
@@ -444,7 +444,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.5</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.6</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -540,20 +540,20 @@ header {
 
     <div class="hs">
       <h3>Buttons</h3>
-      <div class="kv"><span class="k">Freeze</span><span class="v">Locks the current reading so you can move the phone while keeping the numbers visible. Tap Resume to continue live updates.</span></div>
-      <div class="kv"><span class="k">Calibrate</span><span class="v">Corrects for tilt introduced by your phone's camera lens bump or phone case, which prevent the phone from lying perfectly flat. Place the phone on a <b>known flat surface</b> such as a table or countertop, tap Calibrate and confirm. The setting is saved and persists across sessions — only redo it if you change cases.</span></div>
-      <div class="kv"><span class="k">Help</span><span class="v">Shows this help screen.</span></div>
+      <p><b>Freeze</b> — locks the current reading so you can move the phone while keeping the numbers visible. Tap Resume to continue live updates.</p>
+      <p><b>Calibrate</b> — corrects for tilt introduced by your phone's camera lens bump or phone case, which prevent the phone from lying perfectly flat. Place the phone on a <b>known flat surface</b> such as a table or countertop, tap Calibrate and confirm. The setting is saved and persists across sessions — only redo it if you change cases.</p>
+      <p><b>Help</b> — shows this help screen.</p>
     </div>
 
     <div class="hs">
       <h3>Rise Display</h3>
-      <div class="kv"><span class="k">Exact</span><span class="v">Shows rise to the nearest hundredth of an inch.</span></div>
-      <div class="kv"><span class="k">½″</span><span class="v">Rounds up to the nearest half inch — useful if your leveling blocks come in ½″ increments.</span></div>
-      <div class="kv"><span class="k">1″</span><span class="v">Rounds up to the nearest whole inch.</span></div>
+      <p><b>Exact</b> — shows rise to the nearest hundredth of an inch.</p>
+      <p><b>½″</b> — rounds up to the nearest half inch, useful if your leveling blocks come in ½″ increments.</p>
+      <p><b>1″</b> — rounds up to the nearest whole inch.</p>
     </div>
 
     <div class="hs">
-      <h3>Van Dimensions</h3>
+      <h3>Wheel Dimensions</h3>
       <p><b>Wheelbase</b> — distance between front and rear axles in inches. Default is 159″.</p>
       <p><b>Track width</b> — distance between left and right wheel centres in inches. Default is 71″.</p>
       <p>Both defaults are set for the Winnebago Travato.</p>
