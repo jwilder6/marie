@@ -135,8 +135,20 @@ header {
 #bwrap {
   display: flex; flex-direction: row; align-items: center; justify-content: center;
   padding: 6px 10px; flex-shrink: 0;
-  position: relative;  /* contains the hold-badge */
 }
+#bwrap-left {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+}
+#hold-badge {
+  background: rgba(255,179,64,.15); border: 1px solid var(--warn);
+  border-radius: 10px; padding: 6px 10px;
+  font-family: var(--fn-mono); font-size: .7rem;
+  letter-spacing: .08em; color: var(--warn); text-transform: uppercase;
+  opacity: 0; transition: opacity .3s; pointer-events: none;
+  white-space: normal; text-align: center; max-width: 80px; line-height: 1.45;
+}
+#hold-badge.show { opacity: 1; }
+#bwrap-right { flex: 1; }
 .dir-col { display: none; }
 #bubble-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
 #arena {
@@ -355,7 +367,7 @@ header {
 <body>
 
 <div id="perm">
-  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.4</span></h1>
+  <h1>BuffyLevel <span style="font-size:1rem;font-weight:400;color:var(--dim);letter-spacing:.04em;">v2.5</span></h1>
   <p class="tagline">Lay your phone flat on the van floor — the accelerometer measures tilt and pitch and calculates how much to raise each wheel.</p>
 
   <svg width="220" height="200" viewBox="0 0 220 200">
@@ -432,7 +444,7 @@ header {
 
 <div id="app">
   <header>
-    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.4</span></div>
+    <div class="logo">Buffy<span>Level</span> <span style="font-size:.6rem;font-weight:400;color:var(--dim);letter-spacing:.06em;">v2.5</span></div>
     <div class="hdr-right">
       <span class="mode-tag" id="modetag">tap start</span>
       <div class="dot" id="dot"></div>
@@ -446,7 +458,9 @@ header {
   </div>
 
   <div id="bwrap">
-    <div id="hold-badge">❚❚ Reading held</div>
+    <div id="bwrap-left">
+      <div id="hold-badge">&#10073;&#10073; Reading Held</div>
+    </div>
     <div id="bubble-col">
       <div id="arena">
         <svg width="118" height="118" viewBox="0 0 118 118" id="ticksvg"></svg>
@@ -454,18 +468,19 @@ header {
       </div>
       <div id="lvlpill">✦ &nbsp;LEVEL&nbsp; ✦</div>
     </div>
+    <div id="bwrap-right"></div>
   </div>
 
   <div id="dims">
     <div class="dcard">
-      <div class="dlbl">Wheelbase (w)</div>
+      <div class="dlbl">Wheelbase</div>
       <div class="drow">
         <input class="dinput" type="number" id="d-wb" value="159" inputmode="decimal" min="1">
         <span class="dunit">in</span>
       </div>
     </div>
     <div class="dcard">
-      <div class="dlbl">Track width (l)</div>
+      <div class="dlbl">Track width</div>
       <div class="drow">
         <input class="dinput" type="number" id="d-tw" value="71" inputmode="decimal" min="1">
         <span class="dunit">in</span>
@@ -509,47 +524,45 @@ header {
   <div id="help-body">
 
     <div class="hs">
-      <h3>Phone placement</h3>
+      <h3>Phone Placement</h3>
       <p>Place your phone <b>face up</b> on the van floor with the <b>top of the phone pointing toward the front of the van</b> and the <b>left side toward the driver's door</b>. The app reads tilt (side-to-side) and pitch (front-to-back) from the accelerometer.</p>
     </div>
 
     <div class="hs">
-      <h3>Reading the results</h3>
+      <h3>Reading the Results</h3>
       <ul>
         <li><b style="color:var(--ok)">Green wheel</b> — stays on the ground, no rise needed</li>
         <li><b style="color:var(--warn)">Yellow wheel</b> — moderate rise required</li>
         <li><b style="color:var(--hi)">Red wheel</b> — needs the most rise</li>
       </ul>
-      <p style="margin-top:4px">Drive or back onto blocks/ramps under the yellow and red wheels until all four read green.</p>
+      <p>Drive or back onto blocks or ramps under the yellow and red wheels until all four read green.</p>
     </div>
 
     <div class="hs">
       <h3>Buttons</h3>
-      <div class="kv"><span class="k">Freeze</span><span class="v">Locks the current reading so you can move the phone while keeping the numbers visible. Tap again to resume live updates.</span></div>
-      <div class="kv"><span class="k">Calibrate</span><span class="v">Corrects for tilt introduced by your phone's camera lens bump or phone case, which prevent the phone from lying perfectly flat. Place the phone on a <b>known flat surface</b> (a table, countertop, or spirit level), tap Calibrate and confirm. The setting is saved and persists across sessions — only redo it if you change cases.</span></div>
-      <div class="kv"><span class="k">Help</span><span class="v">This page.</span></div>
+      <div class="kv"><span class="k">Freeze</span><span class="v">Locks the current reading so you can move the phone while keeping the numbers visible. Tap Resume to continue live updates.</span></div>
+      <div class="kv"><span class="k">Calibrate</span><span class="v">Corrects for tilt introduced by your phone's camera lens bump or phone case, which prevent the phone from lying perfectly flat. Place the phone on a <b>known flat surface</b> such as a table or countertop, tap Calibrate and confirm. The setting is saved and persists across sessions — only redo it if you change cases.</span></div>
+      <div class="kv"><span class="k">Help</span><span class="v">Shows this help screen.</span></div>
     </div>
 
     <div class="hs">
-      <h3>Rise display</h3>
+      <h3>Rise Display</h3>
       <div class="kv"><span class="k">Exact</span><span class="v">Shows rise to the nearest hundredth of an inch.</span></div>
       <div class="kv"><span class="k">½″</span><span class="v">Rounds up to the nearest half inch — useful if your leveling blocks come in ½″ increments.</span></div>
       <div class="kv"><span class="k">1″</span><span class="v">Rounds up to the nearest whole inch.</span></div>
     </div>
 
     <div class="hs">
-      <h3>Van dimensions</h3>
-      <p><b>Wheelbase (w)</b> — distance between front and rear axles in inches.<br>
-      <b>Track width (l)</b> — distance between left and right wheel centres in inches.<br>
-      Defaults are set to the Winnebago Travato (159″ / 71″).</p>
+      <h3>Van Dimensions</h3>
+      <p><b>Wheelbase</b> — distance between front and rear axles in inches. Default is 159″.</p>
+      <p><b>Track width</b> — distance between left and right wheel centres in inches. Default is 71″.</p>
+      <p>Both defaults are set for the Winnebago Travato.</p>
     </div>
 
-    <div class="tip">
-      <b>Tip:</b> Add this page to your iPhone Home Screen for instant offline access. In Safari tap Share → <b>Add to Home Screen</b>. The app works with no internet connection after the first load.
-    </div>
-
-    <div class="tip">
-      <b>Tip:</b> If the bubble is moving but the rise numbers seem backwards, your phone may be rotated 180°. Make sure the <b>top of the phone</b> (where the camera is) points toward the <b>front</b> of the van. Tap <b>Calibrate</b> after correcting orientation.
+    <div class="hs">
+      <h3>Tips</h3>
+      <p><b>Add to Home Screen:</b> In Safari tap Share → Add to Home Screen. The app works offline after the first load.</p>
+      <p><b>Numbers seem backwards?</b> Your phone may be rotated 180°. Make sure the top of the phone points toward the front of the van, then tap Calibrate.</p>
     </div>
 
     <button id="help-close-bottom" onclick="hideHelp()">✕ Close Help</button>
@@ -723,10 +736,11 @@ function render(){
   for(const k of['FL','FR','RL','RR']){
     const riseRaw=h[k]-minH;
     const rise = riseRaw < RISE_NOISE ? 0 : riseRaw;  // suppress sensor noise floor
+    const riseDisplay = parseFloat(fmtRise(rise));     // the value actually shown
     const frac=riseRaw/span;
     $('r'+k).textContent=fmtRise(rise);
-    $('c'+k).textContent=(rise*2.54).toFixed(1)+' cm';
-    $('w'+k).className='wcard '+(rise<0.05?'s0':frac<0.55?'sL':'sH');
+    $('c'+k).textContent=(riseDisplay*2.54).toFixed(1)+' cm';  // cm matches displayed inches
+    $('w'+k).className='wcard '+(riseDisplay<0.005?'s0':frac<0.55?'sL':'sH');  // color from display
   }
 }
 
