@@ -2,7 +2,7 @@
   "name": "BuffyLevel",
   "short_name": "BuffyLevel",
   "description": "Travato van leveling calculator using phone accelerometer",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b1120",
